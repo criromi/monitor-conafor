@@ -12,49 +12,7 @@ import zipfile
 import tempfile
 
 # --- 1. CONFIGURACIÓN INICIAL ---
-# st.set_page_config(...)  <--- TU CÓDIGO YA TIENE ESTO, NO LO BORRES
-
-# ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (PEGAR ESTO INMEDIATAMENTE DESPUÉS DE SET_PAGE_CONFIG)
-# ==============================================================================
-if 'acceso_concedido' not in st.session_state:
-    st.session_state.acceso_concedido = False
-
-if not st.session_state.acceso_concedido:
-    # Diseño de la pantalla de bloqueo
-    st.markdown("""
-        <style>
-        .stApp { background-color: #f0f2f6; }
-        .login-box { 
-            background: white; padding: 40px; border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #9D2449;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    col_spacer1, col_login, col_spacer2 = st.columns([1, 2, 1])
-    
-    with col_login:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #13322B;'>🔐 Acceso Restringido</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #555;'>Monitor de Proyectos | Cuenca Lerma-Santiago</p>", unsafe_allow_html=True)
-        
-        password = st.text_input("Ingresa el código de acceso:", type="password", placeholder="••••••••")
-        
-        if st.button("Ingresar al Sistema", type="primary", use_container_width=True):
-            if password == "conafor2026":  # <--- 🔑 AQUÍ CAMBIAS LA CONTRASEÑA
-                st.session_state.acceso_concedido = True
-                st.rerun()
-            else:
-                st.error("🚫 Código incorrecto. Intenta de nuevo.")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    st.stop() # 🛑 ESTO ES LO QUE BLOQUEA EL RESTO DE LA APP
-
-# ==============================================================================
-# A PARTIR DE AQUÍ SIGUE TU CÓDIGO NORMAL (COLORES, CSS, ETC.)
-# ==============================================================================
+st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
 
 # 🎨 COLORES INSTITUCIONALES
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
@@ -66,7 +24,125 @@ COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (ESTILO FINAL) ---
+# ==============================================================================
+# 🖼️ CARGA DE LOGO (MOVIDO AL INICIO PARA USARLO EN LOGIN)
+# ==============================================================================
+def get_img_as_base64(file_path):
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception: return None
+
+nombre_logo = "logo 25 ani_conafor"
+carpeta_logos = "logos"
+logo_b64 = None
+ext_encontrada = ""
+for ext in [".png", ".jpg", ".jpeg"]:
+    ruta_posible = os.path.join(carpeta_logos, nombre_logo + ext)
+    if os.path.exists(ruta_posible):
+        logo_b64 = get_img_as_base64(ruta_posible)
+        ext_encontrada = "png" if ext == ".png" else "jpeg"
+        break
+
+# ==============================================================================
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO MEJORADO)
+# ==============================================================================
+if 'acceso_concedido' not in st.session_state:
+    st.session_state.acceso_concedido = False
+
+if not st.session_state.acceso_concedido:
+    # CSS Específico para el Login
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background-color: #f4f6f9; /* Fondo gris muy suave */
+        }}
+        .login-container {{
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 8px solid {COLOR_SECUNDARIO}; /* Borde Guinda Institucional */
+            max-width: 450px;
+            margin: 0 auto;
+        }}
+        .login-title {{
+            color: {COLOR_PRIMARIO};
+            font-family: Arial, sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            margin-top: 15px;
+        }}
+        .login-subtitle {{
+            color: #666;
+            font-weight: 400;
+            font-size: 1rem;
+            margin-bottom: 25px;
+        }}
+        /* Personalizar el botón de Streamlit solo para esta pantalla */
+        div.stButton > button {{
+            background-color: {COLOR_PRIMARIO} !important;
+            color: white !important;
+            border: none !important;
+            font-weight: bold !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 5px !important;
+            width: 100%;
+        }}
+        div.stButton > button:hover {{
+            background-color: #0e2621 !important; /* Un verde un poco más oscuro al pasar mouse */
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Columnas para centrar la tarjeta vertical y horizontalmente
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True) # Espacio arriba
+        
+        # INICIO TARJETA
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        
+        # 1. LOGO
+        if logo_b64:
+            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="180">', unsafe_allow_html=True)
+        else:
+            st.markdown("🌲", unsafe_allow_html=True)
+
+        # 2. TEXTOS
+        st.markdown('<div class="login-title">MONITOR DE PROYECTOS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-subtitle">Cuenca Lerma-Santiago</div>', unsafe_allow_html=True)
+        
+        # 3. INPUT Y BOTÓN
+        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="Ingresa tu código de acceso")
+        
+        if st.button("INGRESAR AL SISTEMA"):
+            if password == "Conafor2026":
+                st.session_state.acceso_concedido = True
+                st.rerun()
+            else:
+                st.error("🔒 Código incorrecto. Verifique sus credenciales.")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        # FIN TARJETA
+
+        st.markdown("""
+            <div style="text-align: center; margin-top: 20px; color: #999; font-size: 0.8rem;">
+            Comisión Nacional Forestal &copy; 2026<br>Uso exclusivo personal autorizado.
+            </div>
+        """, unsafe_allow_html=True)
+        
+    st.stop() # DETIENE LA EJECUCIÓN AQUÍ SI NO HAY ACCESO
+
+# ==============================================================================
+# 🚀 APLICACIÓN PRINCIPAL (SOLO SE EJECUTA SI HAY ACCESO)
+# ==============================================================================
+
+# --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
@@ -132,25 +208,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER ---
-def get_img_as_base64(file_path):
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except Exception: return None
-
-nombre_logo = "logo 25 ani_conafor"
-carpeta_logos = "logos"
-logo_b64 = None
-ext_encontrada = ""
-for ext in [".png", ".jpg", ".jpeg"]:
-    ruta_posible = os.path.join(carpeta_logos, nombre_logo + ext)
-    if os.path.exists(ruta_posible):
-        logo_b64 = get_img_as_base64(ruta_posible)
-        ext_encontrada = "png" if ext == ".png" else "jpeg"
-        break
-
+# --- 3. HEADER APP PRINCIPAL ---
 if logo_b64:
     html_header = f"""
     <div style="border-bottom: 4px solid {COLOR_ACENTO}; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -348,7 +406,7 @@ with col_centro:
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     col_chart1, col_chart2 = st.columns(2, gap="medium")
     
-    # --- GRÁFICA MUNICIPIOS (Corregida) ---
+    # --- GRÁFICA MUNICIPIOS ---
     with col_chart1:
         if not df_filtrado.empty and 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
@@ -358,10 +416,10 @@ with col_centro:
                 df_mun, x='MUNICIPIO', y='MONTO_TOT', 
                 text_auto='.2s', 
                 color_discrete_sequence=[COLOR_PRIMARIO],
-                labels={'MUNICIPIO': 'MUNICIPIO', 'MONTO_TOT': 'MONTO TOTAL'} # <--- AQUÍ SE CAMBIA EL TEXTO
+                labels={'MUNICIPIO': 'MUNICIPIO', 'MONTO_TOT': 'MONTO TOTAL'}
             )
             fig_mun.update_layout(
-                xaxis_title="MUNICIPIO", yaxis_title="MONTO TOTAL", # <--- TÍTULOS DE EJES
+                xaxis_title="MUNICIPIO", yaxis_title="MONTO TOTAL",
                 xaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total descending'), 
                 yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
                 margin=dict(t=10, b=10, l=0, r=0), height=300,
@@ -371,7 +429,7 @@ with col_centro:
             fig_mun.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
 
-    # --- GRÁFICA CONCEPTOS (Corregida) ---
+    # --- GRÁFICA CONCEPTOS ---
     with col_chart2:
         if 'CONCEPTO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Conceptos de Apoyo</div>', unsafe_allow_html=True)
@@ -382,10 +440,10 @@ with col_centro:
                 df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', 
                 orientation='h', text_auto='.2s', 
                 color_discrete_sequence=[COLOR_SECUNDARIO],
-                labels={'CONCEPTO_CORTO': 'CONCEPTO DE APOYO', 'MONTO_TOT': 'MONTO TOTAL'} # <--- AQUÍ SE CAMBIA EL TEXTO
+                labels={'CONCEPTO_CORTO': 'CONCEPTO DE APOYO', 'MONTO_TOT': 'MONTO TOTAL'}
             )
             fig_con.update_layout(
-                xaxis_title="MONTO TOTAL", yaxis_title="CONCEPTO DE APOYO", # <--- TÍTULOS DE EJES
+                xaxis_title="MONTO TOTAL", yaxis_title="CONCEPTO DE APOYO",
                 xaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
                 yaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total ascending'),
                 margin=dict(t=10, b=0, l=0, r=0), height=300,
@@ -437,7 +495,7 @@ with col_der:
             fig_pie.update_layout(height=200, margin=dict(t=10, b=30, l=10, r=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.1))
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
         
-        # --- BAR CHART CATEGORÍA (Corregida para decir GERENCIA) ---
+        # --- BAR CHART CATEGORÍA ---
         st.markdown('<div class="chart-title">Inversión por Categoría</div>', unsafe_allow_html=True)
         df_bar = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         fig_bar = px.bar(
@@ -445,10 +503,10 @@ with col_der:
             color='TIPO_CAPA', 
             color_discrete_map={"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}, 
             text_auto='.2s',
-            labels={'TIPO_CAPA': 'GERENCIA', 'MONTO_TOT': 'MONTO TOTAL'} # <--- CAMBIO SOLICITADO
+            labels={'TIPO_CAPA': 'GERENCIA', 'MONTO_TOT': 'MONTO TOTAL'}
         )
         fig_bar.update_layout(
-            xaxis_title="GERENCIA", yaxis_title="MONTO TOTAL", # <--- TÍTULOS DE EJES
+            xaxis_title="GERENCIA", yaxis_title="MONTO TOTAL",
             xaxis=dict(tickfont=dict(size=12, color="black")),
             yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
             margin=dict(t=10, b=0, l=0, r=0), height=200,
@@ -471,7 +529,7 @@ with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
     
-    # Formateo manual para la superficie (evita el error de Streamlit y pone comas)
+    # Formateo manual para la superficie
     nombre_sup = nombres_columnas.get(col_sup)
     if nombre_sup and nombre_sup in df_tabla.columns:
         df_tabla[nombre_sup] = df_tabla[nombre_sup].apply(lambda x: "{:,.2f}".format(x) if pd.notnull(x) else "0.00")
