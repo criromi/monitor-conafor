@@ -24,16 +24,14 @@ COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
+# --- 2. ESTILOS CSS (ESTILO FINAL) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* =========================================
-       1. PANEL IZQUIERDO (ESTILO TARJETA / CARD)
-       ========================================= */
+    /* PANEL IZQUIERDO (TARJETA) */
     div[data-testid="column"]:nth-of-type(1) > div {{
         background-color: white;
         border-radius: 12px;
@@ -43,18 +41,14 @@ st.markdown(f"""
         height: 100%;
     }}
 
-    /* =========================================
-       2. CHECKBOXES (SEGUROS)
-       ========================================= */
+    /* CHECKBOXES */
     div[data-testid="stCheckbox"] label p {{
         font-weight: 700 !important;
         font-size: 1rem !important;
         color: #333 !important;
     }}
     
-    /* =========================================
-       3. PANELES CENTRO Y DERECHA
-       ========================================= */
+    /* PANELES CENTRO Y DERECHA */
     div[data-testid="column"]:nth-of-type(2) > div,
     div[data-testid="column"]:nth-of-type(3) > div {{
         background-color: white;
@@ -64,9 +58,7 @@ st.markdown(f"""
         border: 1px solid #e0e0e0;
     }}
     
-    /* =========================================
-       4. OTROS ESTILOS
-       ========================================= */
+    /* ESTILOS GENERALES */
     .section-header {{
         color: {COLOR_PRIMARIO};
         font-weight: 800;
@@ -98,7 +90,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER CON LOGO A LA DERECHA ---
+# --- 3. HEADER ---
 def get_img_as_base64(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -167,12 +159,11 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA) - TARJETA LIMPIA
+# 1. CONTROLES (IZQUIERDA)
 # =========================================================
 with col_izq:
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
-    # Checkboxes
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
@@ -315,21 +306,51 @@ with col_centro:
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     col_chart1, col_chart2 = st.columns(2, gap="medium")
     
+    # --- GRÁFICA MUNICIPIOS (Corregida) ---
     with col_chart1:
         if not df_filtrado.empty and 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
             df_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            fig_mun = px.bar(df_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
-            fig_mun.update_layout(height=300, margin=dict(t=10, b=10, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            
+            fig_mun = px.bar(
+                df_mun, x='MUNICIPIO', y='MONTO_TOT', 
+                text_auto='.2s', 
+                color_discrete_sequence=[COLOR_PRIMARIO],
+                labels={'MUNICIPIO': 'MUNICIPIO', 'MONTO_TOT': 'MONTO TOTAL'} # <--- AQUÍ SE CAMBIA EL TEXTO
+            )
+            fig_mun.update_layout(
+                xaxis_title="MUNICIPIO", yaxis_title="MONTO TOTAL", # <--- TÍTULOS DE EJES
+                xaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total descending'), 
+                yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
+                margin=dict(t=10, b=10, l=0, r=0), height=300,
+                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                showlegend=False, font=dict(color="black")
+            )
+            fig_mun.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
 
+    # --- GRÁFICA CONCEPTOS (Corregida) ---
     with col_chart2:
         if 'CONCEPTO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Conceptos de Apoyo</div>', unsafe_allow_html=True)
             df_con = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             df_con['CONCEPTO_CORTO'] = df_con['CONCEPTO'].apply(lambda x: x[:30] + '...' if len(x) > 30 else x)
-            fig_con = px.bar(df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', orientation='h', text_auto='.2s', color_discrete_sequence=[COLOR_SECUNDARIO])
-            fig_con.update_layout(height=300, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            
+            fig_con = px.bar(
+                df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', 
+                orientation='h', text_auto='.2s', 
+                color_discrete_sequence=[COLOR_SECUNDARIO],
+                labels={'CONCEPTO_CORTO': 'CONCEPTO DE APOYO', 'MONTO_TOT': 'MONTO TOTAL'} # <--- AQUÍ SE CAMBIA EL TEXTO
+            )
+            fig_con.update_layout(
+                xaxis_title="MONTO TOTAL", yaxis_title="CONCEPTO DE APOYO", # <--- TÍTULOS DE EJES
+                xaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
+                yaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total ascending'),
+                margin=dict(t=10, b=0, l=0, r=0), height=300,
+                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                showlegend=False, font=dict(color="black")
+            )
+            fig_con.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
             st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
 # =========================================================
@@ -361,20 +382,41 @@ with col_der:
     </div>
     """, unsafe_allow_html=True)
     
-    if not df_filtrado.empty and 'TIPO_PROP' in df_filtrado.columns:
-        st.markdown('<div class="chart-title">Distribución por Tenencia</div>', unsafe_allow_html=True)
-        df_pie = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-        fig_pie = px.pie(df_pie, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO, "#6c757d"])
-        fig_pie.update_layout(height=200, margin=dict(t=10, b=30, l=10, r=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.1))
-        st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+    if not df_filtrado.empty:
+        # --- PIE CHART TENENCIA ---
+        if 'TIPO_PROP' in df_filtrado.columns:
+            st.markdown('<div class="chart-title">Distribución por Tenencia</div>', unsafe_allow_html=True)
+            df_pie = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
+            fig_pie = px.pie(
+                df_pie, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
+                color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO, "#6c757d"],
+                labels={'TIPO_PROP': 'RÉGIMEN', 'MONTO_TOT': 'MONTO TOTAL'}
+            )
+            fig_pie.update_layout(height=200, margin=dict(t=10, b=30, l=10, r=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.1))
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
         
+        # --- BAR CHART CATEGORÍA (Corregida para decir GERENCIA) ---
         st.markdown('<div class="chart-title">Inversión por Categoría</div>', unsafe_allow_html=True)
         df_bar = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-        fig_bar = px.bar(df_bar, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', color_discrete_map={"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}, text_auto='.2s')
-        fig_bar.update_layout(height=200, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+        fig_bar = px.bar(
+            df_bar, x='TIPO_CAPA', y='MONTO_TOT', 
+            color='TIPO_CAPA', 
+            color_discrete_map={"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}, 
+            text_auto='.2s',
+            labels={'TIPO_CAPA': 'GERENCIA', 'MONTO_TOT': 'MONTO TOTAL'} # <--- CAMBIO SOLICITADO
+        )
+        fig_bar.update_layout(
+            xaxis_title="GERENCIA", yaxis_title="MONTO TOTAL", # <--- TÍTULOS DE EJES
+            xaxis=dict(tickfont=dict(size=12, color="black")),
+            yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
+            margin=dict(t=10, b=0, l=0, r=0), height=200,
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=False, font=dict(color="black")
+        )
+        fig_bar.update_traces(textfont_size=12, textposition='outside', cliponaxis=False, textfont_color="black")
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-# --- PIE DE PÁGINA (SOLUCIÓN DEFINITIVA PARA COMAS) ---
+# --- PIE DE PÁGINA ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
@@ -387,13 +429,11 @@ with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
     
-    # TRUCO DE MAGIA: Convertimos la superficie a texto con formato exacto AQUI en Python
-    # Esto garantiza que se vea "1,000.00" con coma, sin errores de Streamlit.
+    # Formateo manual para la superficie (evita el error de Streamlit y pone comas)
     nombre_sup = nombres_columnas.get(col_sup)
     if nombre_sup and nombre_sup in df_tabla.columns:
         df_tabla[nombre_sup] = df_tabla[nombre_sup].apply(lambda x: "{:,.2f}".format(x) if pd.notnull(x) else "0.00")
 
-    # Configuración solo para los signos de pesos (que sí funcionan bien nativos)
     config_cols = {
         "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %.2f"),
         "CONAFOR ($)": st.column_config.NumberColumn(format="$ %.2f"),
