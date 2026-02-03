@@ -54,9 +54,9 @@ st.markdown(f"""
         color: #000000 !important;
     }}
     
-    /* Estilo del contenedor del checkbox */
+    /* Estilo del contenedor del checkbox (FORZADO CON !IMPORTANT) */
     div[data-testid="stCheckbox"] {{
-        background-color: {COLOR_FONDO_GRIS};
+        background-color: {COLOR_FONDO_GRIS} !important; 
         padding: 8px 12px;
         border-radius: 6px;
         margin-bottom: 8px;
@@ -281,12 +281,15 @@ with col_centro:
             clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
 
-    # OPTIMIZACIÓN 1: prefer_canvas=True hace que Leaflet use Canvas en vez de SVG (más rápido para muchos polígonos)
+    # OPTIMIZACIÓN 1: prefer_canvas=True (AGREGADO PARA FLUIDEZ)
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
     folium.TileLayer("CartoDB positron", control=False).add_to(m)
 
     if cuenca is not None:
         folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
+        # OPTIMIZACIÓN 2: FIT BOUNDS (AGREGADO PARA ENCUADRE DE CUENCA)
+        bounds = cuenca.total_bounds
+        m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
     config_capas = {"PSA": COLOR_PSA_MAPA, "PFC": COLOR_PFC_MAPA, "MFC": COLOR_MFC_MAPA}
 
@@ -311,10 +314,10 @@ with col_centro:
     for tipo in capas:
         subset = df_mapa[df_mapa['TIPO_CAPA'] == tipo]
         if not subset.empty:
-            # OPTIMIZACIÓN 2: smooth_factor simplifica visualmente al hacer zoom/pan
+            # OPTIMIZACIÓN 3: smooth_factor (AGREGADO PARA FLUIDEZ)
             folium.GeoJson(
                 subset, name=tipo,
-                smooth_factor=2.0,  # <--- CLAVE PARA FLUIDEZ
+                smooth_factor=2.0,  
                 style_function=lambda x, c=config_capas[tipo]: {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
                 tooltip=folium.GeoJsonTooltip(
                     fields=campos_validos, 
@@ -338,7 +341,7 @@ with col_centro:
     """)
     m.get_root().add_child(macro)
     
-    # OPTIMIZACIÓN 3: returned_objects=[] evita que Streamlit se recargue al mover el mapa
+    # OPTIMIZACIÓN 4: returned_objects=[] (AGREGADO PARA EVITAR RECARGAS)
     st_folium(m, width="100%", height=600, returned_objects=[])
 
     # --- GRÁFICAS INFERIORES (MUNICIPIOS Y CONCEPTOS) ---
