@@ -12,7 +12,49 @@ import zipfile
 import tempfile
 
 # --- 1. CONFIGURACIÓN INICIAL ---
-st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
+# st.set_page_config(...)  <--- TU CÓDIGO YA TIENE ESTO, NO LO BORRES
+
+# ==============================================================================
+# 🔐 SISTEMA DE SEGURIDAD (PEGAR ESTO INMEDIATAMENTE DESPUÉS DE SET_PAGE_CONFIG)
+# ==============================================================================
+if 'acceso_concedido' not in st.session_state:
+    st.session_state.acceso_concedido = False
+
+if not st.session_state.acceso_concedido:
+    # Diseño de la pantalla de bloqueo
+    st.markdown("""
+        <style>
+        .stApp { background-color: #f0f2f6; }
+        .login-box { 
+            background: white; padding: 40px; border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #9D2449;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    col_spacer1, col_login, col_spacer2 = st.columns([1, 2, 1])
+    
+    with col_login:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #13322B;'>🔐 Acceso Restringido</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #555;'>Monitor de Proyectos | Cuenca Lerma-Santiago</p>", unsafe_allow_html=True)
+        
+        password = st.text_input("Ingresa el código de acceso:", type="password", placeholder="••••••••")
+        
+        if st.button("Ingresar al Sistema", type="primary", use_container_width=True):
+            if password == "conafor2026":  # <--- 🔑 AQUÍ CAMBIAS LA CONTRASEÑA
+                st.session_state.acceso_concedido = True
+                st.rerun()
+            else:
+                st.error("🚫 Código incorrecto. Intenta de nuevo.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    st.stop() # 🛑 ESTO ES LO QUE BLOQUEA EL RESTO DE LA APP
+
+# ==============================================================================
+# A PARTIR DE AQUÍ SIGUE TU CÓDIGO NORMAL (COLORES, CSS, ETC.)
+# ==============================================================================
 
 # 🎨 COLORES INSTITUCIONALES
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
