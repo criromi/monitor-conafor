@@ -18,32 +18,38 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
-COLOR_FONDO_PANEL = "#E6E8EB"   # Gris "panel" (como en tu imagen)
+COLOR_FONDO_PANEL = "#E6E8EB"   # Gris "panel" exacto de tu imagen
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (DISEÑO TIPO PANEL UNIFICADO) ---
+# --- 2. ESTILOS CSS (CORREGIDO PARA FONDO GRIS FUERTE) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* --- 1. PANEL IZQUIERDO (BLOQUE GRIS ÚNICO) --- */
-    /* Apuntamos al primer contenedor de columna para hacerlo gris completo */
-    div[data-testid="column"]:nth-of-type(1) > div {{
+    /* --- 1. PANEL IZQUIERDO (LA CAJA GRIS) --- */
+    /* Apuntamos directamente a la primera columna de la fila */
+    div[data-testid="column"]:nth-of-type(1) {{
         background-color: {COLOR_FONDO_PANEL};
-        border-radius: 15px; /* Bordes redondeados como en la imagen */
-        padding: 25px;
-        border: 1px solid #dcdcdc;
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.05);
     }}
 
-    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS INDIVIDUALES) --- */
-    div[data-testid="column"]:nth-of-type(2) > div,
-    div[data-testid="column"]:nth-of-type(3) > div {{
+    /* Aseguramos que el contenido interno no tenga fondo blanco que tape el gris */
+    div[data-testid="column"]:nth-of-type(1) > div {{
+        background-color: transparent !important;
+    }}
+
+    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS) --- */
+    div[data-testid="column"]:nth-of-type(2),
+    div[data-testid="column"]:nth-of-type(3) {{
         background-color: white;
         border-radius: 12px;
         padding: 15px;
@@ -51,24 +57,23 @@ st.markdown(f"""
         border: 1px solid #e0e0e0;
     }}
     
-    /* --- CHECKBOXES "TRANSPARENTES" --- */
-    /* Eliminamos fondo y borde para que se integren al panel gris */
+    /* --- CHECKBOXES (TRANSPARENTES SOBRE GRIS) --- */
+    /* Quitamos cualquier caja blanca del checkbox */
     div[data-testid="stCheckbox"] {{
         background-color: transparent !important;
         border: none !important;
-        box-shadow: none !important;
         padding: 0px !important;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
     }}
     
-    /* Texto de los checkboxes (Negro y fuerte) */
+    /* Texto fuerte y oscuro */
     div[data-testid="stCheckbox"] label p {{
-        color: #222222 !important; 
+        color: #111111 !important; 
         font-weight: 700 !important;
         font-size: 1rem !important;
     }}
     
-    /* El cuadrito de selección (tick box) */
+    /* El cuadrito de selección (tick box) con borde oscuro */
     div[data-testid="stCheckbox"] label span {{
         background-color: white !important;
         border: 2px solid #555 !important;
@@ -77,11 +82,11 @@ st.markdown(f"""
     /* --- ENCABEZADOS DE SECCIÓN --- */
     .section-header {{
         color: {COLOR_PRIMARIO};
-        font-weight: 900;
+        font-weight: 800;
         text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO};
-        padding-bottom: 5px;
-        margin-bottom: 15px;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
         font-size: 1.1rem;
         letter-spacing: 0.5px;
     }}
@@ -179,23 +184,23 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA) - TODO EN UN SOLO PANEL GRIS
+# 1. CONTROLES (IZQUIERDA) - PANEL GRIS UNIFICADO
 # =========================================================
 with col_izq:
-    # Espaciado superior para que respire
-    st.markdown('<div style="margin-top: 10px;"></div>', unsafe_allow_html=True)
+    # Espaciado interno visual
+    st.markdown('<div style="margin-top: 5px;"></div>', unsafe_allow_html=True)
     
-    # 1. VISUALIZACIÓN
+    # ENCABEZADO VISUALIZACIÓN
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
-    # Checkboxes limpios (sin cuadros blancos)
+    # CHECKBOXES
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
-    # Nota informativa estilo "aviso"
+    # NOTA
     st.markdown("""
-        <div style="margin-top:20px; font-size:0.85rem; color:#444; background:rgba(255,255,255,0.5); padding:10px; border-radius:8px; border-left:4px solid #17a2b8;">
+        <div style="margin-top:25px; margin-bottom:25px; font-size:0.85rem; color:#444; background:rgba(255,255,255,0.6); padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
@@ -216,10 +221,9 @@ col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'S
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 num_proy = len(df_filtrado)
 
-# 2. SECCIÓN DE DESCARGAS (CONTINÚA EN LA MISMA COLUMNA GRIS)
+# DESCARGAS (CONTINUACIÓN DEL PANEL GRIS)
 with col_izq:
-    st.markdown('<div style="height: 30px;"></div>', unsafe_allow_html=True) # Separador
-    st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="margin-top:10px;">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
 
     if not df_filtrado.empty:
         # EXCEL
@@ -271,7 +275,7 @@ with col_izq:
             st.error(f"Error generando Shapefile: {e}")
 
 # =========================================================
-# 2. MAPA (CENTRO) - SIN CAMBIOS (COMO PEDISTE)
+# 2. MAPA (CENTRO) - SIN CAMBIOS
 # =========================================================
 with col_centro:
     try:
