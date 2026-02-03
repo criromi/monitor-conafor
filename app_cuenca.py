@@ -100,7 +100,7 @@ if not st.session_state.acceso_concedido:
             st.markdown("<h1 style='text-align:center;'>🌲</h1>", unsafe_allow_html=True)
         
         st.markdown(f"""
-            <h2 style='text-align: center; color: {COLOR_PRIMARIO}; font-size: 1.5rem; margin-bottom: 5px;'>
+            <h2 style='text-align: center; color: {COLOR_SECUNDARIO}; font-size: 1.5rem; margin-bottom: 5px;'>
                 MONITOR DE PROYECTOS
             </h2>
             <p style='text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 25px;'>
