@@ -25,14 +25,14 @@ COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO IMPACTANTE - FONDO BOSQUE)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO: TARJETA LIMPIA Y SENCILLA)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
     
-    # BUSCAR EL LOGO (Para mostrarlo en el login)
+    # BUSCAR EL LOGO
     ruta_logo = None
     posibles = ["logo 25 ani_conafor.png", "logo 25 ani_conafor.jpg", "logo 25 ani_conafor.jpeg"]
     for nombre in posibles:
@@ -41,137 +41,92 @@ if not st.session_state.acceso_concedido:
             ruta_logo = path
             break
 
-    # URL IMAGEN DE FONDO (Bosque Aéreo)
-    IMG_FONDO = "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=2074&auto=format&fit=crop"
-
+    # CSS PARA CENTRAR Y ESTILAR LA TARJETA
     st.markdown(f"""
         <style>
-        /* 1. RESETEAR STREAMLIT PARA QUE OCUPE TODA LA PANTALLA */
+        /* Ocultar elementos base */
         header, footer {{visibility: hidden;}}
         
-        /* Eliminar padding del contenedor principal (ESTO ARREGLA QUE SE VEA ABAJO) */
-        .block-container {{
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
-            padding-left: 0rem !important;
-            padding-right: 0rem !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-        }}
-        
-        /* 2. FONDO DE PANTALLA COMPLETA */
+        /* 1. Fondo General Gris Suave */
         .stApp {{
-            background-image: url('{IMG_FONDO}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-color: #EEF2F6;
         }}
         
-        /* Capa oscura para que el texto resalte si fuera necesario */
-        .stApp::before {{
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4); /* Oscurecer un poco el bosque */
-            z-index: 0;
+        /* 2. Estilo de la Columna Central (La Tarjeta) */
+        /* Apuntamos a la segunda columna que crearemos abajo */
+        div[data-testid="column"]:nth-of-type(2) {{
+            background-color: white;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra suave */
+            border-top: 6px solid {COLOR_PRIMARIO}; /* Detalle verde arriba */
         }}
 
-        /* 3. CONTENEDOR FLEX PARA CENTRAR LA TARJETA PERFECTAMENTE */
-        div[data-testid="stVerticalBlock"] {{
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh; /* Altura completa de la ventana */
-            width: 100%;
-            z-index: 1; /* Ponerlo encima de la capa oscura */
-        }}
-        
-        /* 4. LA TARJETA DE LOGIN */
-        .login-card {{
-            background: rgba(255, 255, 255, 0.95); /* Blanco casi sólido */
-            padding: 40px;
-            width: 400px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            text-align: center;
-            border-top: 5px solid {COLOR_SECUNDARIO}; /* Detalle Institucional */
-        }}
-
-        .login-title {{
-            color: {COLOR_PRIMARIO};
-            font-family: 'Arial', sans-serif;
-            font-weight: 800;
-            font-size: 1.4rem;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }}
-        
-        .login-subtitle {{
-            color: #555;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-        }}
-
-        /* Inputs y Botones */
-        div[data-testid="stTextInput"] input {{
-            text-align: center;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }}
-        
+        /* 3. Botón personalizado */
         div.stButton > button {{
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
             width: 100%;
-            border-radius: 8px !important;
-            padding: 10px !important;
+            border-radius: 6px !important;
             font-weight: bold !important;
             border: none !important;
-            margin-top: 10px;
+            padding: 0.6rem !important;
         }}
         div.stButton > button:hover {{
             background-color: {COLOR_SECUNDARIO} !important;
         }}
-
+        
+        /* 4. Inputs más limpios */
+        div[data-testid="stTextInput"] input {{
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }}
         </style>
     """, unsafe_allow_html=True)
 
-    # --- HTML DE LA TARJETA ---
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    
-    # Logo
-    if ruta_logo:
-        st.image(ruta_logo, width=160)
-    else:
-        st.markdown("# 🌲") # Fallback si no hay logo
+    # ESTRUCTURA DE COLUMNAS PARA CENTRAR
+    # Usamos 3 columnas: [Espacio, TARJETA, Espacio]
+    # Ajustamos los anchos para que la tarjeta no sea ni muy ancha ni muy angosta
+    col_izq, col_login, col_der = st.columns([1, 1, 1])
 
-    st.markdown("""
-        <div class="login-title">Monitor de Proyectos</div>
-        <div class="login-subtitle">Cuenca Lerma-Santiago</div>
-    """, unsafe_allow_html=True)
-    
-    # Formulario (Widgets de Streamlit inyectados visualmente en la tarjeta)
-    password = st.text_input("Password", type="password", placeholder="Código de Acceso", label_visibility="collapsed")
-    
-    if st.button("INGRESAR"):
-        if password == "conafor2026":
-            st.session_state.acceso_concedido = True
-            st.rerun()
+    with col_login:
+        # Espaciador vertical para bajar la tarjeta y que no quede pegada arriba
+        st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
+        
+        # --- CONTENIDO DE LA TARJETA ---
+        if ruta_logo:
+            st.image(ruta_logo, use_container_width=True)
         else:
-            st.error("🔒 Acceso Denegado")
+            st.markdown("<h1 style='text-align:center;'>🌲</h1>", unsafe_allow_html=True)
+        
+        st.markdown(f"""
+            <h2 style='text-align: center; color: {COLOR_PRIMARIO}; font-size: 1.5rem; margin-bottom: 5px;'>
+                MONITOR DE PROYECTOS
+            </h2>
+            <p style='text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 25px;'>
+                Cuenca Lerma-Santiago
+            </p>
+        """, unsafe_allow_html=True)
 
-    st.markdown("""
-        <div style="margin-top: 20px; font-size: 0.7rem; color: #888;">
-            Comisión Nacional Forestal &copy; 2026
-        </div>
-        </div> """, unsafe_allow_html=True)
+        password = st.text_input("Código de Acceso", type="password", label_visibility="collapsed", placeholder="Contraseña")
+        
+        if st.button("INGRESAR"):
+            if password == "Conafor2026":
+                st.session_state.acceso_concedido = True
+                st.rerun()
+            else:
+                st.error("Credenciales incorrectas")
 
-    st.stop() # 🛑 DETENER SI NO HAY LOGIN
+        st.markdown("""
+            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #aaa;'>
+                Comisión Nacional Forestal &copy; 2026
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.stop() # 🛑 DETIENE EL CÓDIGO AQUÍ
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (TU CÓDIGO FUNCIONAL)
+# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO FUNCIONAL INTACTO)
 # ==============================================================================
 
 # --- Funciones auxiliares para la app principal ---
