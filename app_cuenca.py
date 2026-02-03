@@ -34,20 +34,18 @@ st.markdown(f"""
     /* =========================================
        1. PANEL IZQUIERDO (ESTILO TARJETA / CARD)
        ========================================= */
-    /* En lugar de fondo gris, usamos borde y sombra para separar */
     div[data-testid="column"]:nth-of-type(1) > div {{
-        background-color: white; /* Fondo blanco seguro */
+        background-color: white;
         border-radius: 12px;
         padding: 20px;
-        border: 1px solid #e0e0e0; /* Borde sutil */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* Sombra elegante para separar */
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         height: 100%;
     }}
 
     /* =========================================
        2. CHECKBOXES (SEGUROS)
        ========================================= */
-    /* No tocamos nada raro aquí para no romper las palomitas */
     div[data-testid="stCheckbox"] label p {{
         font-weight: 700 !important;
         font-size: 1rem !important;
@@ -294,7 +292,6 @@ with col_centro:
                 tooltip=folium.GeoJsonTooltip(
                     fields=campos_validos, 
                     aliases=lista_alias,
-                    # 👇 AQUÍ ES EL CAMBIO: Cambia 12px por 10px
                     style=("background-color: white; color: #333333; font-family: arial; font-size: 10px; padding: 8px;")
                 )
             ).add_to(m)
@@ -377,11 +374,33 @@ with col_der:
         fig_bar.update_layout(height=200, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-# --- PIE DE PÁGINA ---
+# --- PIE DE PÁGINA (CON FORMATO ARREGLADO) ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
-    nombres_columnas = {'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 'MUNICIPIO': 'MUNICIPIO', 'TIPO_PROP': 'RÉGIMEN', 'TIPO_CAPA': 'CATEGORÍA', 'CONCEPTO': 'CONCEPTO', 'MONTO_TOT': 'INVERSIÓN ($)', 'MONTO_CNF': 'CONAFOR ($)', 'MONTO_PI': 'CONTRAPARTE ($)', col_sup: 'SUPERFICIE (Ha)'}
+    nombres_columnas = {
+        'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 
+        'MUNICIPIO': 'MUNICIPIO', 'TIPO_PROP': 'RÉGIMEN', 'TIPO_CAPA': 'CATEGORÍA', 
+        'CONCEPTO': 'CONCEPTO', 'MONTO_TOT': 'INVERSIÓN ($)', 
+        'MONTO_CNF': 'CONAFOR ($)', 'MONTO_PI': 'CONTRAPARTE ($)', col_sup: 'SUPERFICIE (Ha)'
+    }
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
-    st.dataframe(df_tabla[cols_visibles], use_container_width=True, hide_index=True)
+    
+    # CONFIGURACIÓN DE FORMATO PARA LA TABLA
+    config_cols = {
+        "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %.2f"),
+        "CONAFOR ($)": st.column_config.NumberColumn(format="$ %.2f"),
+        "CONTRAPARTE ($)": st.column_config.NumberColumn(format="$ %.2f"),
+    }
+    # Agregar superficie si existe (porque la columna cambia de nombre dinámicamente)
+    nombre_sup = nombres_columnas.get(col_sup)
+    if nombre_sup and nombre_sup in df_tabla.columns:
+         config_cols[nombre_sup] = st.column_config.NumberColumn(format="%.2f ha")
+
+    st.dataframe(
+        df_tabla[cols_visibles], 
+        use_container_width=True, 
+        hide_index=True,
+        column_config=config_cols # <--- ESTO ARREGLA LOS NÚMEROS
+    )
