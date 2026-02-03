@@ -374,7 +374,7 @@ with col_der:
         fig_bar.update_layout(height=200, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-# --- PIE DE PÁGINA (CON FORMATO DE MILES EN TODO) ---
+# --- PIE DE PÁGINA (CORREGIDO SIN COMAS PARA EVITAR ERROR) ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
@@ -387,17 +387,17 @@ with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
     
-    # CONFIGURACIÓN DE FORMATO AVANZADO
+    # CONFIGURACIÓN DE FORMATO (SIN COMAS PARA QUE NO FALLE)
     config_cols = {
-        "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %,.2f"),   # Con Comas y Signo
-        "CONAFOR ($)": st.column_config.NumberColumn(format="$ %,.2f"),     # Con Comas y Signo
-        "CONTRAPARTE ($)": st.column_config.NumberColumn(format="$ %,.2f"), # Con Comas y Signo
+        "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %.2f"),
+        "CONAFOR ($)": st.column_config.NumberColumn(format="$ %.2f"),
+        "CONTRAPARTE ($)": st.column_config.NumberColumn(format="$ %.2f"),
     }
     
-    # Formato para Superficie (Agregamos la coma ',' después del %)
+    # Formato para Superficie
     nombre_sup = nombres_columnas.get(col_sup)
     if nombre_sup and nombre_sup in df_tabla.columns:
-         config_cols[nombre_sup] = st.column_config.NumberColumn(format="%,.2f ha") 
+         config_cols[nombre_sup] = st.column_config.NumberColumn(format="%.2f ha") 
 
     st.dataframe(
         df_tabla[cols_visibles], 
