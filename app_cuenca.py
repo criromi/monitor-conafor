@@ -25,219 +25,183 @@ COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
 # ==============================================================================
-# 🖼️ CARGA DE LOGO
-# ==============================================================================
-def get_img_as_base64(file_path):
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except Exception: return None
-
-nombre_logo = "logo 25 ani_conafor"
-carpeta_logos = "logos"
-logo_b64 = None
-ext_encontrada = ""
-for ext in [".png", ".jpg", ".jpeg"]:
-    ruta_posible = os.path.join(carpeta_logos, nombre_logo + ext)
-    if os.path.exists(ruta_posible):
-        logo_b64 = get_img_as_base64(ruta_posible)
-        ext_encontrada = "png" if ext == ".png" else "jpeg"
-        break
-
-# ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO "TARJETA CENTRADA")
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO FINAL DE ALTO IMPACTO)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # URL de la imagen de fondo
-    URL_IMAGEN_FONDO = "https://images.unsplash.com/photo-1503435980611-275dc5866896?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    
+    # 1. CSS PARA FONDO OSCURO INSTITUCIONAL Y TARJETA CENTRADA
     st.markdown(f"""
         <style>
-        /* 1. LIMPIEZA TOTAL */
+        /* Ocultar elementos de Streamlit */
         header {{visibility: hidden;}}
         footer {{visibility: hidden;}}
         
-        /* Fondo de la página completo (gris suave) */
+        /* FONDO DE PANTALLA COMPLETA (Verde Institucional con degradado elegante) */
         .stApp {{
-            background-color: #f0f2f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }}
-        
-        .block-container {{
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh; /* Forzar altura completa */
-        }}
-        
-        /* 2. LA TARJETA FLOTANTE (CONTENEDOR PRINCIPAL) */
-        .login-card-wrapper {{
-            display: flex;
-            width: 900px;       /* Ancho fijo ideal */
-            height: 550px;      /* Alto fijo ideal */
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15); /* Sombra elegante */
-            overflow: hidden;   /* Para que la imagen respete el borde redondeado */
-        }}
-        
-        /* 3. COLUMNA IZQUIERDA (IMAGEN) */
-        .card-image {{
-            flex: 1; /* Ocupa el 50% */
-            background-image: url('{URL_IMAGEN_FONDO}');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Texto arriba y abajo */
-            padding: 30px;
-        }}
-        
-        /* Capa oscura sobre la imagen para que se lea el texto */
-        .card-image::before {{
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.1), rgba(0,0,0,0.6));
-            z-index: 1;
-        }}
-        
-        .card-image-text {{
-            position: relative;
-            z-index: 2;
-            color: white;
-            font-family: 'Arial', sans-serif;
-        }}
-        
-        .title-large {{
-            font-size: 2.5rem;
-            font-weight: 800;
-            line-height: 1.1;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }}
-        
-        .subtitle-small {{
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }}
-        
-        /* 4. COLUMNA DERECHA (FORMULARIO) */
-        .card-form {{
-            flex: 1; /* Ocupa el otro 50% */
-            padding: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }}
-        
-        .form-header {{
-            text-align: center;
-            margin-bottom: 30px;
-        }}
-        
-        .form-title {{
-            color: {COLOR_PRIMARIO};
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-top: 10px;
-        }}
-        
-        .form-subtitle {{
-            color: #888;
-            font-size: 0.9rem;
+            background: linear-gradient(145deg, {COLOR_PRIMARIO} 40%, #0a1f1a 100%);
+            background-attachment: fixed;
         }}
 
-        /* Ajustes de Widgets dentro de la tarjeta */
-        div[data-testid="stTextInput"] {{
-            width: 100%;
+        /* Eliminar márgenes para centrar perfecto */
+        .block-container {{
+            padding: 0 !important; margin: 0 !important; max-width: 100% !important;
         }}
+
+        /* CONTENEDOR FLEX PARA CENTRADO VERTICAL Y HORIZONTAL */
+        .login-wrapper {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Altura completa de la ventana */
+            width: 100%;
+            padding: 20px;
+        }}
+
+        /* LA TARJETA DE LOGIN (FLOTANTE) */
+        .login-card {{
+            background: #ffffff;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 420px; /* Ancho óptimo para login */
+            border-radius: 24px;
+            /* Sombra profunda para efecto de flotación sobre el fondo oscuro */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            text-align: center;
+            position: relative;
+            /* Borde superior con el color secundario (Guinda) para acento */
+            border-top: 6px solid {COLOR_SECUNDARIO};
+        }}
+
+        /* TIPOGRAFÍA */
+        .login-title {{
+            font-family: 'Arial Black', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: {COLOR_PRIMARIO};
+            margin: 20px 0 5px 0;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }}
+        .login-subtitle {{
+            font-size: 0.95rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 35px;
+        }}
+        .copyright {{
+            margin-top: 30px; font-size: 0.7rem; color: #aaa;
+        }}
+
+        /* PERSONALIZACIÓN DE WIDGETS STREAMLIT DENTRO DE LA TARJETA */
+        /* Input de contraseña */
         div[data-testid="stTextInput"] input {{
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            border-radius: 12px !important;
+            padding: 12px 15px !important;
+            border: 2px solid #eee !important;
+            background-color: #f9f9f9 !important;
+            font-size: 1rem;
+            transition: all 0.3s;
         }}
-        div.stButton {{
-            width: 100%;
-        }}
-        div.stButton > button {{
-            width: 100%;
-            background-color: {COLOR_PRIMARIO} !important;
-            color: white !important;
-            padding: 12px !important;
-            border-radius: 8px !important;
-            font-weight: bold !important;
-            border: none !important;
-            margin-top: 10px;
-        }}
-        div.stButton > button:hover {{
-            background-color: #0e2923 !important;
-            transform: scale(1.02);
-            transition: all 0.2s;
+        div[data-testid="stTextInput"] input:focus {{
+            border-color: {COLOR_PRIMARIO} !important;
+            background-color: white !important;
         }}
         
-        .copyright {{
-            margin-top: 30px;
-            font-size: 0.7rem;
-            color: #aaa;
-            text-align: center;
+        /* Botón de Acceso (Color Guinda para contraste de acción) */
+        div.stButton > button {{
+            background-color: {COLOR_SECUNDARIO} !important;
+            color: white !important;
+            width: 100%;
+            padding: 0.8rem !important;
+            font-size: 1.1rem !important;
+            border-radius: 12px !important;
+            font-weight: 800 !important;
+            border: none !important;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(157, 36, 73, 0.3);
+            transition: all 0.3s ease;
+        }}
+        div.stButton > button:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(157, 36, 73, 0.4);
         }}
         </style>
     """, unsafe_allow_html=True)
 
-    # HTML ESTRUCTURAL (TARJETA MAESTRA)
+    # 2. ESTRUCTURA HTML CENTRADA
+    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+    # --- LOGO E IMAGEN ---
+    # Buscar el logo en la carpeta "logos"
+    ruta_logo = None
+    posibles_nombres = ["logo 25 ani_conafor.png", "logo 25 ani_conafor.jpg", "logo 25 ani_conafor.jpeg"]
+    for nombre in posibles_nombres:
+        ruta_completa = os.path.join("logos", nombre)
+        if os.path.exists(ruta_completa):
+            ruta_logo = ruta_completa
+            break
+    
+    # Mostrar el logo usando st.image nativo (más robusto)
+    if ruta_logo:
+        st.image(ruta_logo, width=180)
+    else:
+        # Si no encuentra el logo, muestra un icono como fallback
+        st.markdown(f"<h1 style='font-size: 4rem; margin: 0;'>🌲</h1>", unsafe_allow_html=True)
+
+    # --- TÍTULOS ---
     st.markdown(f"""
-        <div class="login-card-wrapper">
-            <div class="card-image">
-                <div class="card-image-text">
-                    <div class="subtitle-small">SISTEMA GEOGRÁFICO</div>
-                    <div class="title-large">MONITOR<br>FORESTAL</div>
-                </div>
-                <div class="card-image-text">
-                    <div class="subtitle-small">Gestión eficiente para un futuro sostenible.</div>
-                </div>
-            </div>
-            
-            <div class="card-form">
-                <div class="form-header">
-                    {'<img src="data:image/' + ext_encontrada + ';base64,' + logo_b64 + '" width="150">' if logo_b64 else ''}
-                    <div class="form-title">Bienvenido</div>
-                    <div class="form-subtitle">Ingresa tus credenciales para continuar</div>
-                </div>
+        <div class="login-title">Monitor de Proyectos</div>
+        <div class="login-subtitle">Cuenca Lerma-Santiago</div>
     """, unsafe_allow_html=True)
 
-    # WIDGETS DE STREAMLIT (Insertados en el flujo normal, pero estilizados por CSS)
-    password = st.text_input("Contraseña", type="password", placeholder="Código de acceso", label_visibility="collapsed")
+    # --- FORMULARIO DE STREAMLIT ---
+    password = st.text_input("Contraseña", type="password", placeholder="🔒 Ingresa el código de acceso", label_visibility="collapsed")
     
     if st.button("INICIAR SESIÓN"):
         if password == "Conafor2026":
             st.session_state.acceso_concedido = True
             st.rerun()
         else:
-            st.error("Acceso denegado")
-
-    # CIERRE DE HTML
-    st.markdown("""
-                <div class="copyright">
-                    Comisión Nacional Forestal &copy; 2026
+            # Mensaje de error estilizado
+            st.markdown(f"""
+                <div style='background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem;'>
+                    ⚠️ Credenciales incorrectas. Intente de nuevo.
                 </div>
-            </div> </div> """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-    st.stop()
+    # --- PIE DE TARJETA ---
+    st.markdown(f"""
+        <div class="copyright">
+            Comisión Nacional Forestal &copy; 2026<br>Sistema de Información Geográfica
+        </div>
+    </div> </div> """, unsafe_allow_html=True)
+
+    st.stop() # 🛑 DETIENE TODO AQUÍ HASTA QUE SE LOGUEEN
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (RESTO DEL CÓDIGO)
+# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO EXISTENTE QUE YA FUNCIONA)
 # ==============================================================================
+
+# --- Funciones auxiliares para la app principal ---
+def get_img_as_base64_app(file_path):
+    try:
+        with open(file_path, "rb") as f: data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception: return None
+
+nombre_logo_app = "logo 25 ani_conafor"
+carpeta_logos_app = "logos"
+logo_b64_app = None
+ext_encontrada_app = ""
+for ext in [".png", ".jpg", ".jpeg"]:
+    ruta_posible = os.path.join(carpeta_logos_app, nombre_logo_app + ext)
+    if os.path.exists(ruta_posible):
+        logo_b64_app = get_img_as_base64_app(ruta_posible)
+        ext_encontrada_app = "png" if ext == ".png" else "jpeg"
+        break
 
 # --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
 st.markdown(f"""
@@ -306,7 +270,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 3. HEADER APP PRINCIPAL ---
-if logo_b64:
+if logo_b64_app:
     html_header = f"""
     <div style="border-bottom: 4px solid {COLOR_ACENTO}; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -317,7 +281,7 @@ if logo_b64:
                 COMISIÓN NACIONAL FORESTAL <b style="color:#756f6c; font-size: 1.4rem;">(CONAFOR)</b>
             </div>
         </div>
-        <img src="data:image/{ext_encontrada};base64,{logo_b64}" style="height: 70px; width: auto;">
+        <img src="data:image/{ext_encontrada_app};base64,{logo_b64_app}" style="height: 70px; width: auto;">
     </div>
     """
 else:
