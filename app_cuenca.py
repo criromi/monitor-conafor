@@ -25,7 +25,7 @@ COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (AQUÍ ESTÁ LA SOLUCIÓN) ---
+# --- 2. ESTILOS CSS (CORRECCIÓN DE PALOMITAS) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
@@ -35,43 +35,36 @@ st.markdown(f"""
     /* =========================================
        1. PANEL IZQUIERDO (CAJA GRIS ÚNICA)
        ========================================= */
-    /* Apuntamos al bloque vertical interno de la primera columna */
     div[data-testid="column"]:nth-of-type(1) > div > div {{
         background-color: {COLOR_FONDO_PANEL};
         border-radius: 15px;
         padding: 20px;
         border: 1px solid #ccc;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        gap: 0.5rem; /* Espacio entre elementos */
+        gap: 0.5rem;
     }}
 
     /* =========================================
-       2. CHECKBOXES (VISIBLES Y FUERTES)
+       2. CHECKBOXES (SOLUCIÓN DEFINITIVA)
        ========================================= */
-    /* Contenedor del checkbox transparente para que tome el gris del panel */
+    /* Hacemos transparente el contenedor para que se vea el gris de fondo */
     div[data-testid="stCheckbox"] {{
         background-color: transparent !important;
+        padding: 0px !important;
     }}
 
-    /* El texto de la etiqueta (Label) */
+    /* Texto: Negro y Negrita */
     div[data-testid="stCheckbox"] label p {{
-        color: #000000 !important; /* Negro puro */
-        font-weight: 700 !important; /* Negrita */
+        color: #000000 !important;
+        font-weight: 700 !important;
         font-size: 1rem !important;
     }}
 
-    /* El cuadrito donde haces clic (Tick Box) */
-    div[data-testid="stCheckbox"] label span:first-child {{
-        background-color: white !important; /* Fondo blanco para el cuadrito */
-        border: 2px solid #333 !important;  /* Borde oscuro visible */
-        width: 1.2rem;
-        height: 1.2rem;
-    }}
-    
-    /* Ajuste para los iconos SVG dentro del checkbox (la palomita) */
+    /* LA PALOMITA (El Icono SVG): Lo forzamos a ser visible */
     div[data-testid="stCheckbox"] svg {{
-        color: {COLOR_PRIMARIO} !important; /* Palomita verde institucional */
-        stroke-width: 3px !important;
+        color: {COLOR_PRIMARIO} !important; /* Verde oscuro */
+        fill: {COLOR_PRIMARIO} !important;
+        stroke: {COLOR_PRIMARIO} !important;
     }}
 
     /* =========================================
@@ -192,16 +185,14 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 # 1. CONTROLES (IZQUIERDA) - PANEL GRIS UNIFICADO
 # =========================================================
 with col_izq:
-    # Ajuste de margen superior
     st.markdown('<div style="margin-top: 5px;"></div>', unsafe_allow_html=True)
-    
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
+    # Checkboxes
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
-    # Nota informativa
     st.markdown("""
         <div style="margin-top:20px; font-size:0.85rem; color:#333; background:rgba(255,255,255,0.7); padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
@@ -215,7 +206,7 @@ if ver_mfc: capas.append("MFC")
 
 df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas)]
 
-# Cálculos
+# Cálculos Totales
 monto_cnf = df_filtrado['MONTO_CNF'].sum()
 monto_pi = df_filtrado['MONTO_PI'].sum()
 monto_tot = df_filtrado['MONTO_TOT'].sum()
@@ -223,7 +214,7 @@ col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'S
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 num_proy = len(df_filtrado)
 
-# SECCIÓN DESCARGAS (CONTINÚA EN LA MISMA COLUMNA GRIS)
+# SECCIÓN DESCARGAS (CONTINUACIÓN DEL PANEL GRIS)
 with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
