@@ -18,38 +18,67 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
-COLOR_FONDO_PANEL = "#E6E8EB"   # Gris "panel" exacto de tu imagen
+COLOR_FONDO_PANEL = "#E9ECEF"   # Gris claro sólido para el panel
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (CORREGIDO PARA FONDO GRIS FUERTE) ---
+# --- 2. ESTILOS CSS (AQUÍ ESTÁ LA SOLUCIÓN) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* --- 1. PANEL IZQUIERDO (LA CAJA GRIS) --- */
-    /* Apuntamos directamente a la primera columna de la fila */
-    div[data-testid="column"]:nth-of-type(1) {{
+    /* =========================================
+       1. PANEL IZQUIERDO (CAJA GRIS ÚNICA)
+       ========================================= */
+    /* Apuntamos al bloque vertical interno de la primera columna */
+    div[data-testid="column"]:nth-of-type(1) > div > div {{
         background-color: {COLOR_FONDO_PANEL};
         border-radius: 15px;
         padding: 20px;
         border: 1px solid #ccc;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        gap: 0.5rem; /* Espacio entre elementos */
     }}
 
-    /* Aseguramos que el contenido interno no tenga fondo blanco que tape el gris */
-    div[data-testid="column"]:nth-of-type(1) > div {{
+    /* =========================================
+       2. CHECKBOXES (VISIBLES Y FUERTES)
+       ========================================= */
+    /* Contenedor del checkbox transparente para que tome el gris del panel */
+    div[data-testid="stCheckbox"] {{
         background-color: transparent !important;
     }}
 
-    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS) --- */
-    div[data-testid="column"]:nth-of-type(2),
-    div[data-testid="column"]:nth-of-type(3) {{
+    /* El texto de la etiqueta (Label) */
+    div[data-testid="stCheckbox"] label p {{
+        color: #000000 !important; /* Negro puro */
+        font-weight: 700 !important; /* Negrita */
+        font-size: 1rem !important;
+    }}
+
+    /* El cuadrito donde haces clic (Tick Box) */
+    div[data-testid="stCheckbox"] label span:first-child {{
+        background-color: white !important; /* Fondo blanco para el cuadrito */
+        border: 2px solid #333 !important;  /* Borde oscuro visible */
+        width: 1.2rem;
+        height: 1.2rem;
+    }}
+    
+    /* Ajuste para los iconos SVG dentro del checkbox (la palomita) */
+    div[data-testid="stCheckbox"] svg {{
+        color: {COLOR_PRIMARIO} !important; /* Palomita verde institucional */
+        stroke-width: 3px !important;
+    }}
+
+    /* =========================================
+       3. PANELES CENTRO Y DERECHA (BLANCOS)
+       ========================================= */
+    div[data-testid="column"]:nth-of-type(2) > div,
+    div[data-testid="column"]:nth-of-type(3) > div {{
         background-color: white;
         border-radius: 12px;
         padding: 15px;
@@ -57,41 +86,19 @@ st.markdown(f"""
         border: 1px solid #e0e0e0;
     }}
     
-    /* --- CHECKBOXES (TRANSPARENTES SOBRE GRIS) --- */
-    /* Quitamos cualquier caja blanca del checkbox */
-    div[data-testid="stCheckbox"] {{
-        background-color: transparent !important;
-        border: none !important;
-        padding: 0px !important;
-        margin-bottom: 8px;
-    }}
-    
-    /* Texto fuerte y oscuro */
-    div[data-testid="stCheckbox"] label p {{
-        color: #111111 !important; 
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-    }}
-    
-    /* El cuadrito de selección (tick box) con borde oscuro */
-    div[data-testid="stCheckbox"] label span {{
-        background-color: white !important;
-        border: 2px solid #555 !important;
-    }}
-
-    /* --- ENCABEZADOS DE SECCIÓN --- */
+    /* =========================================
+       4. OTROS ESTILOS
+       ========================================= */
     .section-header {{
         color: {COLOR_PRIMARIO};
         font-weight: 800;
         text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO};
-        padding-bottom: 8px;
-        margin-bottom: 20px;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
         font-size: 1.1rem;
-        letter-spacing: 0.5px;
     }}
 
-    /* --- MÉTRICAS --- */
     .metric-container {{
         background-color: #F8F9FA;
         border-radius: 8px;
@@ -121,7 +128,6 @@ def get_img_as_base64(file_path):
         return base64.b64encode(data).decode()
     except Exception: return None
 
-# Búsqueda de logo
 nombre_logo = "logo 25 ani_conafor"
 carpeta_logos = "logos"
 logo_b64 = None
@@ -133,7 +139,6 @@ for ext in [".png", ".jpg", ".jpeg"]:
         ext_encontrada = "png" if ext == ".png" else "jpeg"
         break
 
-# Construcción HTML
 if logo_b64:
     html_header = f"""
     <div style="border-bottom: 4px solid {COLOR_ACENTO}; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -187,25 +192,22 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 # 1. CONTROLES (IZQUIERDA) - PANEL GRIS UNIFICADO
 # =========================================================
 with col_izq:
-    # Espaciado interno visual
+    # Ajuste de margen superior
     st.markdown('<div style="margin-top: 5px;"></div>', unsafe_allow_html=True)
     
-    # ENCABEZADO VISUALIZACIÓN
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
-    # CHECKBOXES
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
-    # NOTA
+    # Nota informativa
     st.markdown("""
-        <div style="margin-top:25px; margin-bottom:25px; font-size:0.85rem; color:#444; background:rgba(255,255,255,0.6); padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
+        <div style="margin-top:20px; font-size:0.85rem; color:#333; background:rgba(255,255,255,0.7); padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
 
-# Lógica de Filtros
 capas = []
 if ver_psa: capas.append("PSA")
 if ver_pfc: capas.append("PFC")
@@ -213,7 +215,7 @@ if ver_mfc: capas.append("MFC")
 
 df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas)]
 
-# Cálculos Totales
+# Cálculos
 monto_cnf = df_filtrado['MONTO_CNF'].sum()
 monto_pi = df_filtrado['MONTO_PI'].sum()
 monto_tot = df_filtrado['MONTO_TOT'].sum()
@@ -221,12 +223,12 @@ col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'S
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 num_proy = len(df_filtrado)
 
-# DESCARGAS (CONTINUACIÓN DEL PANEL GRIS)
+# SECCIÓN DESCARGAS (CONTINÚA EN LA MISMA COLUMNA GRIS)
 with col_izq:
-    st.markdown('<div class="section-header" style="margin-top:10px;">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
 
     if not df_filtrado.empty:
-        # EXCEL
         nombres_excel = {
             'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 
             'MUNICIPIO': 'MUNICIPIO', 'TIPO_PROP': 'RÉGIMEN', 'TIPO_CAPA': 'CATEGORÍA', 
@@ -250,32 +252,27 @@ with col_izq:
             use_container_width=True
         )
 
-        # SHAPEFILE
         try:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 ruta_shp = os.path.join(tmp_dir, "Proyectos_CONAFOR.shp")
                 df_filtrado.to_file(ruta_shp, driver='ESRI Shapefile')
-                
                 buffer_zip = BytesIO()
                 with zipfile.ZipFile(buffer_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
                     for archivo in os.listdir(tmp_dir):
-                        ruta_completa = os.path.join(tmp_dir, archivo)
-                        zf.write(ruta_completa, arcname=archivo)
+                        zf.write(os.path.join(tmp_dir, archivo), arcname=archivo)
                 buffer_zip.seek(0)
-                
                 st.download_button(
                     label="🌍 Descargar Capa (.zip SHP)",
                     data=buffer_zip,
                     file_name="Proyectos_Shapefile.zip",
                     mime="application/zip",
-                    use_container_width=True,
-                    help="Archivo ZIP compatible con cualquier SIG (ArcGIS, QGIS)."
+                    use_container_width=True
                 )
         except Exception as e:
             st.error(f"Error generando Shapefile: {e}")
 
 # =========================================================
-# 2. MAPA (CENTRO) - SIN CAMBIOS
+# 2. MAPA (CENTRO)
 # =========================================================
 with col_centro:
     try:
@@ -296,19 +293,18 @@ with col_centro:
         m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
     config_capas = {"PSA": COLOR_PSA_MAPA, "PFC": COLOR_PFC_MAPA, "MFC": COLOR_MFC_MAPA}
-
     df_mapa = df_filtrado.copy()
     df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
-    if col_sup:
-        df_mapa['SUP_FMT'] = df_mapa[col_sup].apply(lambda x: "{:,.1f}".format(x))
+    if col_sup: df_mapa['SUP_FMT'] = df_mapa[col_sup].apply(lambda x: "{:,.1f}".format(x))
 
     campos_deseados = ['SOLICITANT','FOL_PROG', 'ESTADO', 'MUNICIPIO', 'TIPO_PROP', 'MONTO_FMT', 'CONCEPTO']
     if col_sup: campos_deseados.append('SUP_FMT')
     campos_validos = [c for c in campos_deseados if c in df_mapa.columns]
-
+    
     diccionario_alias = {
-        'SOLICITANT': 'BENEFICIARIO: ', 'FOL_PROG': 'FOLIO: ', 'ESTADO': 'ESTADO: ', 'MUNICIPIO': 'MUNICIPIO: ',
-        'TIPO_PROP': 'TIPO DE PROPIEDAD: ', 'MONTO_FMT': 'INVERSIÓN ($): ', 'CONCEPTO': 'CONCEPTO: ', 'SUP_FMT': 'SUPERFICIE (Ha): '
+        'SOLICITANT': 'BENEFICIARIO: ', 'FOL_PROG': 'FOLIO: ', 'ESTADO': 'ESTADO: ', 
+        'MUNICIPIO': 'MUNICIPIO: ', 'TIPO_PROP': 'TIPO DE PROPIEDAD: ', 
+        'MONTO_FMT': 'INVERSIÓN ($): ', 'CONCEPTO': 'CONCEPTO: ', 'SUP_FMT': 'SUPERFICIE (Ha): '
     }
     lista_alias = [diccionario_alias.get(c, c) for c in campos_validos]
 
@@ -316,14 +312,9 @@ with col_centro:
         subset = df_mapa[df_mapa['TIPO_CAPA'] == tipo]
         if not subset.empty:
             folium.GeoJson(
-                subset, name=tipo,
-                smooth_factor=2.0,  
+                subset, name=tipo, smooth_factor=2.0,
                 style_function=lambda x, c=config_capas[tipo]: {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
-                tooltip=folium.GeoJsonTooltip(
-                    fields=campos_validos, 
-                    aliases=lista_alias,
-                    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;")
-                )
+                tooltip=folium.GeoJsonTooltip(fields=campos_validos, aliases=lista_alias)
             ).add_to(m)
 
     macro = MacroElement()
@@ -340,7 +331,6 @@ with col_centro:
     {{% endmacro %}}
     """)
     m.get_root().add_child(macro)
-    
     st_folium(m, width="100%", height=600, returned_objects=[])
 
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
@@ -351,15 +341,7 @@ with col_centro:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
             df_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             fig_mun = px.bar(df_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
-            fig_mun.update_layout(
-                xaxis_title=None, yaxis_title=None,
-                xaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total descending'), 
-                yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
-                margin=dict(t=10, b=10, l=0, r=0), height=300,
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                showlegend=False, font=dict(color="black")
-            )
-            fig_mun.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
+            fig_mun.update_layout(height=300, margin=dict(t=10, b=10, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
 
     with col_chart2:
@@ -368,15 +350,7 @@ with col_centro:
             df_con = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             df_con['CONCEPTO_CORTO'] = df_con['CONCEPTO'].apply(lambda x: x[:30] + '...' if len(x) > 30 else x)
             fig_con = px.bar(df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', orientation='h', text_auto='.2s', color_discrete_sequence=[COLOR_SECUNDARIO])
-            fig_con.update_layout(
-                xaxis_title=None, yaxis_title=None,
-                xaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
-                yaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total ascending'),
-                margin=dict(t=10, b=0, l=0, r=0), height=300,
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                showlegend=False, font=dict(color="black")
-            )
-            fig_con.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
+            fig_con.update_layout(height=300, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
 # =========================================================
@@ -386,11 +360,10 @@ with col_der:
     st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="metric-container">
-        <div class="metric-label">CONAFOR vs PARTE INTERESADA (CONTRAPARTE)</div>
+        <div class="metric-label">CONAFOR vs PARTE INTERESADA</div>
         <div class="metric-value">${monto_cnf:,.0f}</div>
         <div style="font-size: 0.8rem; color: #666; font-weight:bold;">+ ${monto_pi:,.0f} (Part.)</div>
     </div>
-    
     <div class="metric-container" style="border-left: 5px solid {COLOR_SECUNDARIO}; background:white;">
         <div class="metric-label">TOTAL EJERCIDO</div>
         <div class="metric-value-total">${monto_tot:,.0f}</div>
@@ -403,53 +376,30 @@ with col_der:
         <div class="metric-label">Superficie Total</div>
         <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
     </div>
-    
     <div style="text-align:center; margin-bottom:15px; background:#F8F9FA; padding:10px; border-radius:8px; border:1px solid #dcdcdc;">
         <div class="metric-label">PROYECTOS APOYADOS</div>
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
     """, unsafe_allow_html=True)
     
-    if not df_filtrado.empty:
-        if 'TIPO_PROP' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Distribución por Tenencia</div>', unsafe_allow_html=True)
-            df_pie = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-            fig_pie = px.pie(
-                df_pie, values='MONTO_TOT', names='TIPO_PROP', hole=0.5,
-                color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO, "#6c757d"]
-            )
-            fig_pie.update_layout(
-                showlegend=True, legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
-                margin=dict(t=10, b=30, l=10, r=10), height=200,
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="black")
-            )
-            fig_pie.update_traces(textposition='inside', textinfo='percent')
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-
+    if not df_filtrado.empty and 'TIPO_PROP' in df_filtrado.columns:
+        st.markdown('<div class="chart-title">Distribución por Tenencia</div>', unsafe_allow_html=True)
+        df_pie = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
+        fig_pie = px.pie(df_pie, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO, "#6c757d"])
+        fig_pie.update_layout(height=200, margin=dict(t=10, b=30, l=10, r=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=True, legend=dict(orientation="h", y=-0.1))
+        st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        
         st.markdown('<div class="chart-title">Inversión por Categoría</div>', unsafe_allow_html=True)
         df_bar = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         fig_bar = px.bar(df_bar, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', color_discrete_map={"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}, text_auto='.2s')
-        fig_bar.update_layout(
-            xaxis_title=None, yaxis_title=None,
-            xaxis=dict(tickfont=dict(size=12, color="black")),
-            yaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
-            margin=dict(t=10, b=0, l=0, r=0), height=200,
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            showlegend=False, font=dict(color="black")
-        )
-        fig_bar.update_traces(textfont_size=12, textposition='outside', cliponaxis=False, textfont_color="black")
+        fig_bar.update_layout(height=200, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
 # --- PIE DE PÁGINA ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
-    nombres_columnas = {
-        'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 'MUNICIPIO': 'MUNICIPIO',
-        'TIPO_PROP': 'RÉGIMEN DE PROPIEDAD', 'TIPO_CAPA': 'CATEGORÍA', 'CONCEPTO': 'CONCEPTO DE APOYO',
-        'MONTO_TOT': 'INVERSIÓN TOTAL ($)', 'MONTO_CNF': 'CONAFOR ($)', 'MONTO_PI': 'CONTRAPARTE ($)', col_sup: 'SUPERFICIE (Ha)'
-    }
+    nombres_columnas = {'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 'MUNICIPIO': 'MUNICIPIO', 'TIPO_PROP': 'RÉGIMEN', 'TIPO_CAPA': 'CATEGORÍA', 'CONCEPTO': 'CONCEPTO', 'MONTO_TOT': 'INVERSIÓN ($)', 'MONTO_CNF': 'CONAFOR ($)', 'MONTO_PI': 'CONTRAPARTE ($)', col_sup: 'SUPERFICIE (Ha)'}
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
     st.dataframe(df_tabla[cols_visibles], use_container_width=True, hide_index=True)
