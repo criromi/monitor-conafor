@@ -25,7 +25,7 @@ COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
 # ==============================================================================
-# 🖼️ CARGA DE LOGO (MOVIDO AL INICIO PARA USARLO EN LOGIN)
+# 🖼️ CARGA DE LOGO
 # ==============================================================================
 def get_img_as_base64(file_path):
     try:
@@ -46,75 +46,67 @@ for ext in [".png", ".jpg", ".jpeg"]:
         break
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO PROFESIONAL "HIGH-END")
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO MINIMALISTA Y LIMPIO)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # CSS PARA ELIMINAR EL CUADRO FANTASMA Y CENTRAR
+    # CSS MINIMALISTA
     st.markdown(f"""
         <style>
-        /* 1. Ocultar elementos base de Streamlit para limpiar la pantalla */
+        /* Ocultar elementos base de Streamlit */
         header {{visibility: hidden;}}
         footer {{visibility: hidden;}}
         
-        /* 2. Fondo general elegante */
+        /* Fondo limpio */
         .stApp {{
-            background-color: #EEF2F6;
-            background-image: radial-gradient(#dce4ec 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-color: #f8f9fa;
         }}
 
-        /* 3. ELIMINAR EL ESPACIO EN BLANCO SUPERIOR (El error del cuadro extra) */
+        /* Eliminar márgenes superiores */
         .block-container {{
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
             max-width: 100% !important;
         }}
 
-        /* 4. Contenedor de la Tarjeta (Centrado Absoluto) */
+        /* Contenedor para centrar */
         .login-wrapper {{
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 90vh; /* Ocupa casi toda la altura */
+            height: 90vh;
             width: 100%;
         }}
 
-        /* 5. La Tarjeta de Login */
+        /* La Tarjeta Súper Limpia (Sin bordes de color ni sombras pesadas) */
         .login-card {{
             background: white;
-            padding: 3rem;
+            padding: 2.5rem;
             width: 100%;
-            max-width: 480px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08); /* Sombra suave y profunda */
+            max-width: 450px;
+            border-radius: 12px;
+            /* Borde muy sutil en lugar de sombra pesada */
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); 
             text-align: center;
-            border-top: 8px solid {COLOR_SECUNDARIO}; /* Borde Institucional */
-            border-bottom: 8px solid {COLOR_PRIMARIO};
-            position: relative;
         }}
 
         /* Estilos de Texto */
-        .login-header {{
-            margin-bottom: 1.5rem;
-        }}
+        .login-header {{ margin-bottom: 1.5rem; }}
         .app-title {{
             font-family: 'Arial', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 800;
+            font-size: 1.6rem;
+            font-weight: 700;
             color: {COLOR_PRIMARIO};
-            margin-top: 10px;
-            letter-spacing: -0.5px;
+            margin-top: 15px;
         }}
         .app-subtitle {{
-            font-size: 1rem;
-            color: #666;
-            font-weight: 500;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 0.95rem;
+            color: #777;
+            font-weight: 400;
+            margin-bottom: 25px;
         }}
 
         /* Botón Personalizado */
@@ -123,46 +115,36 @@ if not st.session_state.acceso_concedido:
             color: white !important;
             width: 100%;
             padding: 0.6rem !important;
-            font-size: 1.1rem !important;
-            border-radius: 8px !important;
+            font-size: 1rem !important;
+            border-radius: 6px !important;
             font-weight: bold !important;
             border: none !important;
-            box-shadow: 0 4px 6px rgba(19, 50, 43, 0.2);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }}
         div.stButton > button:hover {{
-            background-color: {COLOR_SECUNDARIO} !important;
-            box-shadow: 0 6px 12px rgba(157, 36, 73, 0.3);
-            transform: translateY(-2px);
+            background-color: #0d2e26 !important; /* Un poco más oscuro */
         }}
         
-        /* Input Field más bonito */
+        /* Input Field limpio */
         div[data-testid="stTextInput"] input {{
-            border-radius: 8px !important;
-            border: 1px solid #ddd !important;
-            padding: 10px 15px !important;
-            font-size: 1rem !important;
-        }}
-        div[data-testid="stTextInput"] input:focus {{
-            border-color: {COLOR_PRIMARIO} !important;
-            box-shadow: 0 0 0 2px rgba(19, 50, 43, 0.1) !important;
+            border-radius: 6px !important;
+            border: 1px solid #ced4da !important;
+            padding: 10px 12px !important;
         }}
         </style>
     """, unsafe_allow_html=True)
     
-    # ESTRUCTURA HTML LIMPIA (USANDO COLUMNAS PARA CENTRAR EL CONTENIDO)
     col_vacio1, col_centro, col_vacio2 = st.columns([1, 2, 1])
     
     with col_centro:
-        # Espaciador vertical para bajarlo al centro visual
-        st.markdown("<div style='height: 15vh;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 18vh;'></div>", unsafe_allow_html=True) # Espacio vertical
         
-        # INICIO DE TARJETA
+        # INICIO DE TARJETA LIMPIA
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
         
         # 1. LOGO
         if logo_b64:
-            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="200" style="margin-bottom:10px;">', unsafe_allow_html=True)
+            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="180">', unsafe_allow_html=True)
         else:
             st.markdown("🌲", unsafe_allow_html=True)
 
@@ -175,30 +157,27 @@ if not st.session_state.acceso_concedido:
         """, unsafe_allow_html=True)
         
         # 3. FORMULARIO
-        # Usamos placeholder vacío para que se vea limpio
-        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="🔒 Ingresa el código de acceso")
+        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="Ingresa el código de acceso")
+        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
         
-        st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-        
-        if st.button("ACCEDER AL SISTEMA"):
+        if st.button("ACCEDER"):
             if password == "conafor2026":
                 st.session_state.acceso_concedido = True
                 st.rerun()
             else:
-                st.error("⚠️ Credenciales no válidas")
+                st.warning("Credenciales incorrectas.")
         
-        # 4. PIE DE TARJETA
+        # 4. PIE
         st.markdown("""
-            <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 0.75rem; color: #999;">
-                Sistema de Información Geográfica &copy; 2026<br>
-                <b>Comisión Nacional Forestal</b>
+            <div style="margin-top: 30px; font-size: 0.7rem; color: #aaa;">
+                Comisión Nacional Forestal &copy; 2026
             </div>
             </div> """, unsafe_allow_html=True)
 
-    st.stop() # DETIENE LA APP AQUÍ
+    st.stop()
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO QUE YA FUNCIONA PERFECTO)
+# 🚀 APLICACIÓN PRINCIPAL (YA NO LE MOVEMOS NADA AQUÍ ABAJO)
 # ==============================================================================
 
 # --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
