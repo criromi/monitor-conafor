@@ -66,11 +66,11 @@ if not st.session_state.acceso_concedido:
         div.stButton > button {{
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
-            width: 100%;
+            width: 150%;
             border-radius: 6px !important;
             font-weight: bold !important;
             border: none !important;
-            padding: 2rem !important;
+            padding: 0.6rem !important;
         }}
         div.stButton > button:hover {{
             background-color: {COLOR_SECUNDARIO} !important;
