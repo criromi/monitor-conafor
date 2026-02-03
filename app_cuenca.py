@@ -46,138 +46,160 @@ for ext in [".png", ".jpg", ".jpeg"]:
         break
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO MINIMALISTA Y LIMPIO)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO PANTALLA DIVIDIDA)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # CSS MINIMALISTA
+    # URL de la imagen de fondo (puedes cambiarla por otra)
+    URL_IMAGEN_FONDO = "https://images.unsplash.com/photo-1503435980611-275dc5866896?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    
     st.markdown(f"""
         <style>
-        /* Ocultar elementos base de Streamlit */
+        /* LIMPIEZA GENERAL */
         header {{visibility: hidden;}}
         footer {{visibility: hidden;}}
-        
-        /* Fondo limpio */
-        .stApp {{
-            background-color: #f8f9fa;
-        }}
-
-        /* Eliminar márgenes superiores */
+        .stApp {{ background-color: white; }}
         .block-container {{
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
+            padding: 0 !important;
+            margin: 0 !important;
             max-width: 100% !important;
         }}
-
-        /* Contenedor para centrar */
-        .login-wrapper {{
+        
+        /* CONTENEDOR PRINCIPAL (PANTALLA DIVIDIDA) */
+        .login-container {{
             display: flex;
+            height: 100vh;
+            width: 100vw;
+        }}
+        
+        /* COLUMNA IZQUIERDA (IMAGEN) */
+        .image-column {{
+            flex: 45%;
+            background-image: url('{URL_IMAGEN_FONDO}');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }}
+        
+        /* TÍTULO SOBRE LA IMAGEN */
+        .image-title {{
+            color: white;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            padding: 40px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+        }}
+        
+        /* COLUMNA DERECHA (FORMULARIO) */
+        .form-column {{
+            flex: 55%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 90vh;
-            width: 100%;
+            padding: 40px;
         }}
-
-        /* La Tarjeta Súper Limpia (Sin bordes de color ni sombras pesadas) */
-        .login-card {{
-            background: white;
-            padding: 2.5rem;
+        
+        /* ESTILOS DEL FORMULARIO */
+        .form-content {{
             width: 100%;
-            max-width: 450px;
-            border-radius: 12px;
-            /* Borde muy sutil en lugar de sombra pesada */
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03); 
+            max-width: 400px;
             text-align: center;
         }}
-
-        /* Estilos de Texto */
-        .login-header {{ margin-bottom: 1.5rem; }}
-        .app-title {{
+        
+        .login-title {{
             font-family: 'Arial', sans-serif;
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: {COLOR_PRIMARIO};
-            margin-top: 15px;
+            margin-top: 20px;
         }}
-        .app-subtitle {{
-            font-size: 0.95rem;
-            color: #777;
-            font-weight: 400;
-            margin-bottom: 25px;
+        .login-subtitle {{
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 35px;
         }}
-
-        /* Botón Personalizado */
+        
+        /* PERSONALIZACIÓN DE WIDGETS DE STREAMLIT */
+        div[data-testid="stTextInput"] label {{
+            font-weight: bold;
+            color: {COLOR_PRIMARIO};
+        }}
+        div[data-testid="stTextInput"] input {{
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }}
         div.stButton > button {{
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
             width: 100%;
-            padding: 0.6rem !important;
+            padding: 12px !important;
             font-size: 1rem !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             font-weight: bold !important;
             border: none !important;
-            transition: all 0.2s ease;
+            margin-top: 15px;
         }}
         div.stButton > button:hover {{
-            background-color: #0d2e26 !important; /* Un poco más oscuro */
+            background-color: #0f2b25 !important;
         }}
         
-        /* Input Field limpio */
-        div[data-testid="stTextInput"] input {{
-            border-radius: 6px !important;
-            border: 1px solid #ced4da !important;
-            padding: 10px 12px !important;
+        /* FOOTER */
+        .footer-text {{
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: #888;
         }}
         </style>
     """, unsafe_allow_html=True)
+
+    # ESTRUCTURA HTML PRINCIPAL
+    st.markdown(f"""
+        <div class="login-container">
+            <div class="image-column">
+                <div class="image-title">
+                    SISTEMA DE INFORMACIÓN GEOGRÁFICA
+                </div>
+            </div>
+            <div class="form-column">
+                <div class="form-content">
+                    {'<img src="data:image/' + ext_encontrada + ';base64,' + logo_b64 + '" width="180">' if logo_b64 else ''}
+                    <div class="login-title">MONITOR DE PROYECTOS</div>
+                    <div class="login-subtitle">Cuenca Lerma-Santiago</div>
+    """, unsafe_allow_html=True)
+            
+    # WIDGETS DE STREAMLIT (DENTRO DE LA COLUMNA DERECHA)
+    password = st.text_input("Contraseña", type="password", placeholder="Ingrese su código de acceso")
     
-    col_vacio1, col_centro, col_vacio2 = st.columns([1, 2, 1])
-    
-    with col_centro:
-        st.markdown("<div style='height: 18vh;'></div>", unsafe_allow_html=True) # Espacio vertical
-        
-        # INICIO DE TARJETA LIMPIA
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
-        
-        # 1. LOGO
-        if logo_b64:
-            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="180">', unsafe_allow_html=True)
+    if st.button("ACCEDER"):
+        if password == "Conafor2026":
+            st.session_state.acceso_concedido = True
+            st.rerun()
         else:
-            st.markdown("🌲", unsafe_allow_html=True)
+            st.error("Credenciales incorrectas.")
 
-        # 2. TÍTULOS
-        st.markdown(f"""
-            <div class="login-header">
-                <div class="app-title">MONITOR DE PROYECTOS</div>
-                <div class="app-subtitle">Cuenca Lerma-Santiago</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # 3. FORMULARIO
-        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="Ingresa el código de acceso")
-        st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
-        
-        if st.button("ACCEDER"):
-            if password == "conafor2026":
-                st.session_state.acceso_concedido = True
-                st.rerun()
-            else:
-                st.warning("Credenciales incorrectas.")
-        
-        # 4. PIE
-        st.markdown("""
-            <div style="margin-top: 30px; font-size: 0.7rem; color: #aaa;">
-                Comisión Nacional Forestal &copy; 2026
-            </div>
-            </div> """, unsafe_allow_html=True)
+    # CIERRE DE ESTRUCTURA HTML
+    st.markdown("""
+                    <div class="footer-text">
+                        Comisión Nacional Forestal &copy; 2026<br>
+                        Uso exclusivo personal autorizado.
+                    </div>
+                </div> </div> </div> """, unsafe_allow_html=True)
 
-    st.stop()
+    st.stop() # DETIENE LA EJECUCIÓN AQUÍ
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (YA NO LE MOVEMOS NADA AQUÍ ABAJO)
+# 🚀 APLICACIÓN PRINCIPAL (SI SE CONCEDE ACCESO)
 # ==============================================================================
 
 # --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
