@@ -49,7 +49,7 @@ if not st.session_state.acceso_concedido:
         
         /* 1. Fondo General Gris Suave */
         .stApp {{
-            background-color: #EEF2F6;
+            background-color: #FFFF;
         }}
         
         /* 2. Estilo de la Columna Central (La Tarjeta) */
@@ -118,7 +118,7 @@ if not st.session_state.acceso_concedido:
                 st.error("Credenciales incorrectas")
 
         st.markdown("""
-            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #FFFFFF;'>
+            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #aaa;'>
                 Comisión Nacional Forestal &copy; 2026
             </div>
         """, unsafe_allow_html=True)
