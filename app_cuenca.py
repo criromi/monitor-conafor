@@ -118,7 +118,7 @@ if not st.session_state.acceso_concedido:
                 st.error("Credenciales incorrectas")
 
         st.markdown("""
-            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #aaa;'>
+            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #FFFFFF;'>
                 Comisión Nacional Forestal &copy; 2026
             </div>
         """, unsafe_allow_html=True)
