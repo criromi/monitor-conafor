@@ -46,160 +46,197 @@ for ext in [".png", ".jpg", ".jpeg"]:
         break
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO PANTALLA DIVIDIDA)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO "TARJETA CENTRADA")
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # URL de la imagen de fondo (puedes cambiarla por otra)
+    # URL de la imagen de fondo
     URL_IMAGEN_FONDO = "https://images.unsplash.com/photo-1503435980611-275dc5866896?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     
     st.markdown(f"""
         <style>
-        /* LIMPIEZA GENERAL */
+        /* 1. LIMPIEZA TOTAL */
         header {{visibility: hidden;}}
         footer {{visibility: hidden;}}
-        .stApp {{ background-color: white; }}
+        
+        /* Fondo de la página completo (gris suave) */
+        .stApp {{
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        
         .block-container {{
             padding: 0 !important;
             margin: 0 !important;
             max-width: 100% !important;
-        }}
-        
-        /* CONTENEDOR PRINCIPAL (PANTALLA DIVIDIDA) */
-        .login-container {{
             display: flex;
-            height: 100vh;
-            width: 100vw;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; /* Forzar altura completa */
         }}
         
-        /* COLUMNA IZQUIERDA (IMAGEN) */
-        .image-column {{
-            flex: 45%;
+        /* 2. LA TARJETA FLOTANTE (CONTENEDOR PRINCIPAL) */
+        .login-card-wrapper {{
+            display: flex;
+            width: 900px;       /* Ancho fijo ideal */
+            height: 550px;      /* Alto fijo ideal */
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); /* Sombra elegante */
+            overflow: hidden;   /* Para que la imagen respete el borde redondeado */
+        }}
+        
+        /* 3. COLUMNA IZQUIERDA (IMAGEN) */
+        .card-image {{
+            flex: 1; /* Ocupa el 50% */
             background-image: url('{URL_IMAGEN_FONDO}');
             background-size: cover;
             background-position: center;
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: space-between; /* Texto arriba y abajo */
+            padding: 30px;
         }}
         
-        /* TÍTULO SOBRE LA IMAGEN */
-        .image-title {{
+        /* Capa oscura sobre la imagen para que se lea el texto */
+        .card-image::before {{
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+            z-index: 1;
+        }}
+        
+        .card-image-text {{
+            position: relative;
+            z-index: 2;
             color: white;
-            font-family: 'Arial Black', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 900;
-            padding: 40px;
-            text-transform: uppercase;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+            font-family: 'Arial', sans-serif;
         }}
         
-        /* COLUMNA DERECHA (FORMULARIO) */
-        .form-column {{
-            flex: 55%;
-            background-color: white;
+        .title-large {{
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }}
+        
+        .subtitle-small {{
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }}
+        
+        /* 4. COLUMNA DERECHA (FORMULARIO) */
+        .card-form {{
+            flex: 1; /* Ocupa el otro 50% */
+            padding: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 40px;
         }}
         
-        /* ESTILOS DEL FORMULARIO */
-        .form-content {{
-            width: 100%;
-            max-width: 400px;
+        .form-header {{
             text-align: center;
+            margin-bottom: 30px;
         }}
         
-        .login-title {{
-            font-family: 'Arial', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
+        .form-title {{
             color: {COLOR_PRIMARIO};
-            margin-top: 20px;
-        }}
-        .login-subtitle {{
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 35px;
-        }}
-        
-        /* PERSONALIZACIÓN DE WIDGETS DE STREAMLIT */
-        div[data-testid="stTextInput"] label {{
+            font-size: 1.5rem;
             font-weight: bold;
-            color: {COLOR_PRIMARIO};
+            margin-top: 10px;
+        }}
+        
+        .form-subtitle {{
+            color: #888;
+            font-size: 0.9rem;
+        }}
+
+        /* Ajustes de Widgets dentro de la tarjeta */
+        div[data-testid="stTextInput"] {{
+            width: 100%;
         }}
         div[data-testid="stTextInput"] input {{
+            padding: 12px;
             border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 10px;
+            border: 1px solid #ddd;
+        }}
+        div.stButton {{
+            width: 100%;
         }}
         div.stButton > button {{
+            width: 100%;
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
-            width: 100%;
             padding: 12px !important;
-            font-size: 1rem !important;
             border-radius: 8px !important;
             font-weight: bold !important;
             border: none !important;
-            margin-top: 15px;
+            margin-top: 10px;
         }}
         div.stButton > button:hover {{
-            background-color: #0f2b25 !important;
+            background-color: #0e2923 !important;
+            transform: scale(1.02);
+            transition: all 0.2s;
         }}
         
-        /* FOOTER */
-        .footer-text {{
-            margin-top: 40px;
-            font-size: 0.75rem;
-            color: #888;
+        .copyright {{
+            margin-top: 30px;
+            font-size: 0.7rem;
+            color: #aaa;
+            text-align: center;
         }}
         </style>
     """, unsafe_allow_html=True)
 
-    # ESTRUCTURA HTML PRINCIPAL
+    # HTML ESTRUCTURAL (TARJETA MAESTRA)
     st.markdown(f"""
-        <div class="login-container">
-            <div class="image-column">
-                <div class="image-title">
-                    SISTEMA DE INFORMACIÓN GEOGRÁFICA
+        <div class="login-card-wrapper">
+            <div class="card-image">
+                <div class="card-image-text">
+                    <div class="subtitle-small">SISTEMA GEOGRÁFICO</div>
+                    <div class="title-large">MONITOR<br>FORESTAL</div>
+                </div>
+                <div class="card-image-text">
+                    <div class="subtitle-small">Gestión eficiente para un futuro sostenible.</div>
                 </div>
             </div>
-            <div class="form-column">
-                <div class="form-content">
-                    {'<img src="data:image/' + ext_encontrada + ';base64,' + logo_b64 + '" width="180">' if logo_b64 else ''}
-                    <div class="login-title">MONITOR DE PROYECTOS</div>
-                    <div class="login-subtitle">Cuenca Lerma-Santiago</div>
-    """, unsafe_allow_html=True)
             
-    # WIDGETS DE STREAMLIT (DENTRO DE LA COLUMNA DERECHA)
-    password = st.text_input("Contraseña", type="password", placeholder="Ingrese su código de acceso")
+            <div class="card-form">
+                <div class="form-header">
+                    {'<img src="data:image/' + ext_encontrada + ';base64,' + logo_b64 + '" width="150">' if logo_b64 else ''}
+                    <div class="form-title">Bienvenido</div>
+                    <div class="form-subtitle">Ingresa tus credenciales para continuar</div>
+                </div>
+    """, unsafe_allow_html=True)
+
+    # WIDGETS DE STREAMLIT (Insertados en el flujo normal, pero estilizados por CSS)
+    password = st.text_input("Contraseña", type="password", placeholder="Código de acceso", label_visibility="collapsed")
     
-    if st.button("ACCEDER"):
+    if st.button("INICIAR SESIÓN"):
         if password == "Conafor2026":
             st.session_state.acceso_concedido = True
             st.rerun()
         else:
-            st.error("Credenciales incorrectas.")
+            st.error("Acceso denegado")
 
-    # CIERRE DE ESTRUCTURA HTML
+    # CIERRE DE HTML
     st.markdown("""
-                    <div class="footer-text">
-                        Comisión Nacional Forestal &copy; 2026<br>
-                        Uso exclusivo personal autorizado.
-                    </div>
-                </div> </div> </div> """, unsafe_allow_html=True)
+                <div class="copyright">
+                    Comisión Nacional Forestal &copy; 2026
+                </div>
+            </div> </div> """, unsafe_allow_html=True)
 
-    st.stop() # DETIENE LA EJECUCIÓN AQUÍ
+    st.stop()
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (SI SE CONCEDE ACCESO)
+# 🚀 APLICACIÓN PRINCIPAL (RESTO DEL CÓDIGO)
 # ==============================================================================
 
 # --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
