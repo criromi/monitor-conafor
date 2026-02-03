@@ -103,7 +103,7 @@ if not st.session_state.acceso_concedido:
             <h2 style='text-align: center; color: {COLOR_SECUNDARIO}; font-size: 1.6rem; margin-bottom: 5px;'>
                 MONITOR DE PROYECTOS
             </h2>
-            <p style='text-align: center; color: #666; font-size: 1.2rem; margin-bottom: 50px;'>
+            <p style='text-align: center; color: {COLOR_PRIMARIO}; font-size: 1.2rem; margin-bottom: 25px;'>
                 Cuenca Lerma-Santiago
             </p>
         """, unsafe_allow_html=True)
@@ -111,7 +111,7 @@ if not st.session_state.acceso_concedido:
         password = st.text_input("Código de Acceso", type="password", label_visibility="collapsed", placeholder="Contraseña")
         
         if st.button("INGRESAR"):
-            if password == "Conafor2026":
+            if password == "conafor2026":
                 st.session_state.acceso_concedido = True
                 st.rerun()
             else:
