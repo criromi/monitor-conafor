@@ -291,7 +291,12 @@ with col_centro:
             folium.GeoJson(
                 subset, name=tipo, smooth_factor=2.0,
                 style_function=lambda x, c=config_capas[tipo]: {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
-                tooltip=folium.GeoJsonTooltip(fields=campos_validos, aliases=lista_alias)
+                tooltip=folium.GeoJsonTooltip(
+                    fields=campos_validos, 
+                    aliases=lista_alias,
+                    # 👇 AQUÍ ES EL CAMBIO: Cambia 12px por 10px
+                    style=("background-color: white; color: #333333; font-family: arial; font-size: 10px; padding: 8px;")
+                )
             ).add_to(m)
 
     macro = MacroElement()
