@@ -319,7 +319,7 @@ with col_centro:
         if not df_filtrado.empty and 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
             df_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            fig_mun = px.bar(df_mun, x='MUNICIPIO', y='MONTO TOTAL', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
+            fig_mun = px.bar(df_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
             fig_mun.update_layout(height=300, margin=dict(t=10, b=10, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
 
@@ -374,7 +374,7 @@ with col_der:
         fig_bar.update_layout(height=200, margin=dict(t=10, b=0, l=0, r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-# --- PIE DE PÁGINA (CON FORMATO ARREGLADO) ---
+# --- PIE DE PÁGINA (CON FORMATO DE MILES EN TODO) ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
@@ -387,20 +387,21 @@ with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
     
-    # CONFIGURACIÓN DE FORMATO PARA LA TABLA
+    # CONFIGURACIÓN DE FORMATO AVANZADO
     config_cols = {
-        "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %.2f"),
-        "CONAFOR ($)": st.column_config.NumberColumn(format="$ %.2f"),
-        "CONTRAPARTE ($)": st.column_config.NumberColumn(format="$ %.2f"),
+        "INVERSIÓN ($)": st.column_config.NumberColumn(format="$ %,.2f"),   # Con Comas y Signo
+        "CONAFOR ($)": st.column_config.NumberColumn(format="$ %,.2f"),     # Con Comas y Signo
+        "CONTRAPARTE ($)": st.column_config.NumberColumn(format="$ %,.2f"), # Con Comas y Signo
     }
-    # Agregar superficie si existe (porque la columna cambia de nombre dinámicamente)
+    
+    # Formato para Superficie (Agregamos la coma ',' después del %)
     nombre_sup = nombres_columnas.get(col_sup)
     if nombre_sup and nombre_sup in df_tabla.columns:
-         config_cols[nombre_sup] = st.column_config.NumberColumn(format="%.2f ha")
+         config_cols[nombre_sup] = st.column_config.NumberColumn(format="%,.2f ha") 
 
     st.dataframe(
         df_tabla[cols_visibles], 
         use_container_width=True, 
         hide_index=True,
-        column_config=config_cols # <--- ESTO ARREGLA LOS NÚMEROS
+        column_config=config_cols
     )
