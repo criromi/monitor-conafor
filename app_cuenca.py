@@ -158,7 +158,7 @@ if not st.session_state.acceso_concedido:
         
         # 3. FORMULARIO
         password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="Ingresa el código de acceso")
-        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
         
         if st.button("ACCEDER"):
             if password == "conafor2026":
