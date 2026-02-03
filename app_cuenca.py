@@ -25,164 +25,153 @@ COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO FINAL DE ALTO IMPACTO)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO IMPACTANTE - FONDO BOSQUE)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # 1. CSS PARA FONDO OSCURO INSTITUCIONAL Y TARJETA CENTRADA
+    
+    # BUSCAR EL LOGO (Para mostrarlo en el login)
+    ruta_logo = None
+    posibles = ["logo 25 ani_conafor.png", "logo 25 ani_conafor.jpg", "logo 25 ani_conafor.jpeg"]
+    for nombre in posibles:
+        path = os.path.join("logos", nombre)
+        if os.path.exists(path):
+            ruta_logo = path
+            break
+
+    # URL IMAGEN DE FONDO (Bosque Aéreo)
+    IMG_FONDO = "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=2074&auto=format&fit=crop"
+
     st.markdown(f"""
         <style>
-        /* Ocultar elementos de Streamlit */
-        header {{visibility: hidden;}}
-        footer {{visibility: hidden;}}
+        /* 1. RESETEAR STREAMLIT PARA QUE OCUPE TODA LA PANTALLA */
+        header, footer {{visibility: hidden;}}
         
-        /* FONDO DE PANTALLA COMPLETA (Verde Institucional con degradado elegante) */
-        .stApp {{
-            background: linear-gradient(145deg, {COLOR_PRIMARIO} 40%, #0a1f1a 100%);
-            background-attachment: fixed;
-        }}
-
-        /* Eliminar márgenes para centrar perfecto */
+        /* Eliminar padding del contenedor principal (ESTO ARREGLA QUE SE VEA ABAJO) */
         .block-container {{
-            padding: 0 !important; margin: 0 !important; max-width: 100% !important;
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0rem !important;
+            padding-right: 0rem !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }}
+        
+        /* 2. FONDO DE PANTALLA COMPLETA */
+        .stApp {{
+            background-image: url('{IMG_FONDO}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        
+        /* Capa oscura para que el texto resalte si fuera necesario */
+        .stApp::before {{
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Oscurecer un poco el bosque */
+            z-index: 0;
         }}
 
-        /* CONTENEDOR FLEX PARA CENTRADO VERTICAL Y HORIZONTAL */
-        .login-wrapper {{
+        /* 3. CONTENEDOR FLEX PARA CENTRAR LA TARJETA PERFECTAMENTE */
+        div[data-testid="stVerticalBlock"] {{
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Altura completa de la ventana */
+            height: 100vh; /* Altura completa de la ventana */
             width: 100%;
-            padding: 20px;
-        }}
-
-        /* LA TARJETA DE LOGIN (FLOTANTE) */
-        .login-card {{
-            background: #ffffff;
-            padding: 3rem 2.5rem;
-            width: 100%;
-            max-width: 420px; /* Ancho óptimo para login */
-            border-radius: 24px;
-            /* Sombra profunda para efecto de flotación sobre el fondo oscuro */
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
-            text-align: center;
-            position: relative;
-            /* Borde superior con el color secundario (Guinda) para acento */
-            border-top: 6px solid {COLOR_SECUNDARIO};
-        }}
-
-        /* TIPOGRAFÍA */
-        .login-title {{
-            font-family: 'Arial Black', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: {COLOR_PRIMARIO};
-            margin: 20px 0 5px 0;
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
-        }}
-        .login-subtitle {{
-            font-size: 0.95rem;
-            color: #666;
-            font-weight: 500;
-            margin-bottom: 35px;
-        }}
-        .copyright {{
-            margin-top: 30px; font-size: 0.7rem; color: #aaa;
-        }}
-
-        /* PERSONALIZACIÓN DE WIDGETS STREAMLIT DENTRO DE LA TARJETA */
-        /* Input de contraseña */
-        div[data-testid="stTextInput"] input {{
-            border-radius: 12px !important;
-            padding: 12px 15px !important;
-            border: 2px solid #eee !important;
-            background-color: #f9f9f9 !important;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }}
-        div[data-testid="stTextInput"] input:focus {{
-            border-color: {COLOR_PRIMARIO} !important;
-            background-color: white !important;
+            z-index: 1; /* Ponerlo encima de la capa oscura */
         }}
         
-        /* Botón de Acceso (Color Guinda para contraste de acción) */
+        /* 4. LA TARJETA DE LOGIN */
+        .login-card {{
+            background: rgba(255, 255, 255, 0.95); /* Blanco casi sólido */
+            padding: 40px;
+            width: 400px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            text-align: center;
+            border-top: 5px solid {COLOR_SECUNDARIO}; /* Detalle Institucional */
+        }}
+
+        .login-title {{
+            color: {COLOR_PRIMARIO};
+            font-family: 'Arial', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }}
+        
+        .login-subtitle {{
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }}
+
+        /* Inputs y Botones */
+        div[data-testid="stTextInput"] input {{
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }}
+        
         div.stButton > button {{
-            background-color: {COLOR_SECUNDARIO} !important;
+            background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
             width: 100%;
-            padding: 0.8rem !important;
-            font-size: 1.1rem !important;
-            border-radius: 12px !important;
-            font-weight: 800 !important;
+            border-radius: 8px !important;
+            padding: 10px !important;
+            font-weight: bold !important;
             border: none !important;
             margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(157, 36, 73, 0.3);
-            transition: all 0.3s ease;
         }}
         div.stButton > button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(157, 36, 73, 0.4);
+            background-color: {COLOR_SECUNDARIO} !important;
         }}
+
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. ESTRUCTURA HTML CENTRADA
-    st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+    # --- HTML DE LA TARJETA ---
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
-    # --- LOGO E IMAGEN ---
-    # Buscar el logo en la carpeta "logos"
-    ruta_logo = None
-    posibles_nombres = ["logo 25 ani_conafor.png", "logo 25 ani_conafor.jpg", "logo 25 ani_conafor.jpeg"]
-    for nombre in posibles_nombres:
-        ruta_completa = os.path.join("logos", nombre)
-        if os.path.exists(ruta_completa):
-            ruta_logo = ruta_completa
-            break
     
-    # Mostrar el logo usando st.image nativo (más robusto)
+    # Logo
     if ruta_logo:
-        st.image(ruta_logo, width=180)
+        st.image(ruta_logo, width=160)
     else:
-        # Si no encuentra el logo, muestra un icono como fallback
-        st.markdown(f"<h1 style='font-size: 4rem; margin: 0;'>🌲</h1>", unsafe_allow_html=True)
+        st.markdown("# 🌲") # Fallback si no hay logo
 
-    # --- TÍTULOS ---
-    st.markdown(f"""
+    st.markdown("""
         <div class="login-title">Monitor de Proyectos</div>
         <div class="login-subtitle">Cuenca Lerma-Santiago</div>
     """, unsafe_allow_html=True)
-
-    # --- FORMULARIO DE STREAMLIT ---
-    password = st.text_input("Contraseña", type="password", placeholder="🔒 Ingresa el código de acceso", label_visibility="collapsed")
     
-    if st.button("INICIAR SESIÓN"):
-        if password == "Conafor2026":
+    # Formulario (Widgets de Streamlit inyectados visualmente en la tarjeta)
+    password = st.text_input("Password", type="password", placeholder="Código de Acceso", label_visibility="collapsed")
+    
+    if st.button("INGRESAR"):
+        if password == "conafor2026":
             st.session_state.acceso_concedido = True
             st.rerun()
         else:
-            # Mensaje de error estilizado
-            st.markdown(f"""
-                <div style='background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem;'>
-                    ⚠️ Credenciales incorrectas. Intente de nuevo.
-                </div>
-            """, unsafe_allow_html=True)
+            st.error("🔒 Acceso Denegado")
 
-    # --- PIE DE TARJETA ---
-    st.markdown(f"""
-        <div class="copyright">
-            Comisión Nacional Forestal &copy; 2026<br>Sistema de Información Geográfica
+    st.markdown("""
+        <div style="margin-top: 20px; font-size: 0.7rem; color: #888;">
+            Comisión Nacional Forestal &copy; 2026
         </div>
-    </div> </div> """, unsafe_allow_html=True)
+        </div> """, unsafe_allow_html=True)
 
-    st.stop() # 🛑 DETIENE TODO AQUÍ HASTA QUE SE LOGUEEN
+    st.stop() # 🛑 DETENER SI NO HAY LOGIN
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO EXISTENTE QUE YA FUNCIONA)
+# 🚀 APLICACIÓN PRINCIPAL (TU CÓDIGO FUNCIONAL)
 # ==============================================================================
 
 # --- Funciones auxiliares para la app principal ---
