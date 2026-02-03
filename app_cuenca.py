@@ -19,31 +19,49 @@ COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
 COLOR_TEXTO = "#333333"         # Gris Oscuro
-COLOR_FONDO_GRIS = "#F8F9FA"    # Gris muy claro
+COLOR_FONDO_GRIS = "#F4F6F8"    # Gris un poco más notable para el panel
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS ---
+# --- 2. ESTILOS CSS (AQUÍ ESTÁ LA MAGIA DEL CUADRO GRIS) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* --- TARJETAS --- */
-    div[data-testid="column"] {{
+    /* --- 1. COLUMNA IZQUIERDA (CONTROLES) - EL CUADRO GRIS --- */
+    div[data-testid="column"]:nth-of-type(1) {{
+        background-color: {COLOR_FONDO_GRIS}; /* Fondo GRIS para todo el panel */
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #dcdcdc;
+    }}
+
+    /* --- 2. COLUMNAS CENTRO Y DERECHA - FONDO BLANCO --- */
+    div[data-testid="column"]:nth-of-type(2),
+    div[data-testid="column"]:nth-of-type(3) {{
         background-color: white;
         border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e0e0e0;
-        height: 100%;
     }}
     
-    /* --- CORRECCIÓN DE TEXTO CHECKBOXES --- */
+    /* --- CHECKBOXES (BOTONES BLANCOS DENTRO DEL GRIS) --- */
+    div[data-testid="stCheckbox"] {{
+        background-color: #FFFFFF !important; /* Blancos para resaltar */
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border-left: 5px solid {COLOR_SECUNDARIO};
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave */
+    }}
+
+    /* Texto del checkbox */
     div[data-testid="stCheckbox"] label p {{
         color: #000000 !important; 
         font-weight: 700 !important;
@@ -53,16 +71,6 @@ st.markdown(f"""
     div[data-testid="stCheckbox"] label span {{
         color: #000000 !important;
     }}
-    
-    /* Estilo del contenedor del checkbox (FORZADO CON !IMPORTANT) */
-    div[data-testid="stCheckbox"] {{
-        background-color: {COLOR_FONDO_GRIS} !important; 
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        border-left: 5px solid {COLOR_SECUNDARIO};
-        border: 1px solid #ddd;
-    }}
 
     /* --- ENCABEZADOS DE SECCIÓN --- */
     .section-header {{
@@ -70,9 +78,9 @@ st.markdown(f"""
         font-weight: 800;
         border-bottom: 2px solid {COLOR_ACENTO};
         padding-bottom: 5px;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        margin-top: 10px;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        margin-top: 5px;
     }}
 
     /* --- MÉTRICAS --- */
@@ -83,9 +91,6 @@ st.markdown(f"""
         margin-bottom: 8px;
         text-align: center;
         border: 1px solid #eee;
-    }}
-    .metric-label {{
-        font-size: 0.7rem; color: #555; text-transform: uppercase; font-weight: 700;
     }}
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; }}
     .metric-value-total {{ font-size: 1.5rem; font-weight: 900; color: {COLOR_SECUNDARIO}; }}
@@ -173,18 +178,9 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA)
+# 1. CONTROLES (IZQUIERDA) - AHORA DENTRO DEL PANEL GRIS
 # =========================================================
 with col_izq:
-    st.markdown("""
-        <style>
-        div[data-testid="stCheckbox"] div[data-testid="stMarkdownContainer"] p {
-            color: #000000 !important; font-weight: 700 !important; font-size: 16px !important; white-space: nowrap !important;
-        }
-        div[data-testid="stCheckbox"] span { color: #000000 !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
@@ -192,8 +188,8 @@ with col_izq:
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
     st.markdown("""
-        <div style="margin-top:20px; font-size:0.8rem; color:#000; background:#fff; padding:10px; border-radius:6px; border:1px solid #ccc;">
-        <span style="color:black;">ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.</span>
+        <div style="margin-top:20px; margin-bottom:20px; font-size:0.8rem; color:#333; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
 
@@ -215,7 +211,6 @@ num_proy = len(df_filtrado)
 
 # SECCIÓN DE DESCARGAS (Dentro de columna izquierda)
 with col_izq:
-    st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
 
     if not df_filtrado.empty:
@@ -281,13 +276,13 @@ with col_centro:
             clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
 
-    # OPTIMIZACIÓN 1: prefer_canvas=True (AGREGADO PARA FLUIDEZ)
+    # Mapa optimizado
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
     folium.TileLayer("CartoDB positron", control=False).add_to(m)
 
     if cuenca is not None:
         folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        # OPTIMIZACIÓN 2: FIT BOUNDS (AGREGADO PARA ENCUADRE DE CUENCA)
+        # ENCUADRE AUTOMÁTICO
         bounds = cuenca.total_bounds
         m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
@@ -314,7 +309,6 @@ with col_centro:
     for tipo in capas:
         subset = df_mapa[df_mapa['TIPO_CAPA'] == tipo]
         if not subset.empty:
-            # OPTIMIZACIÓN 3: smooth_factor (AGREGADO PARA FLUIDEZ)
             folium.GeoJson(
                 subset, name=tipo,
                 smooth_factor=2.0,  
@@ -341,15 +335,13 @@ with col_centro:
     """)
     m.get_root().add_child(macro)
     
-    # OPTIMIZACIÓN 4: returned_objects=[] (AGREGADO PARA EVITAR RECARGAS)
     st_folium(m, width="100%", height=600, returned_objects=[])
 
-    # --- GRÁFICAS INFERIORES (MUNICIPIOS Y CONCEPTOS) ---
+    # --- GRÁFICAS INFERIORES ---
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     
     col_chart1, col_chart2 = st.columns(2, gap="medium")
     
-    # 1. TOP 10 MUNICIPIOS
     with col_chart1:
         if not df_filtrado.empty and 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
@@ -370,7 +362,6 @@ with col_centro:
             fig_mun.update_traces(textfont_size=11, textposition='outside', cliponaxis=False)
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
 
-    # 2. TOP 10 CONCEPTOS
     with col_chart2:
         if 'CONCEPTO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Conceptos de Apoyo</div>', unsafe_allow_html=True)
@@ -396,7 +387,6 @@ with col_centro:
 # 3. ESTADÍSTICAS (DERECHA)
 # =========================================================
 with col_der:
-    # --- FINANCIERA ---
     st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="metric-container">
@@ -411,7 +401,6 @@ with col_der:
     </div>
     """, unsafe_allow_html=True)
 
-    # --- FÍSICA ---
     st.markdown('<div class="section-header" style="margin-top: 25px;">🌲 AVANCE FÍSICO</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="metric-container">
@@ -426,7 +415,6 @@ with col_der:
     """, unsafe_allow_html=True)
     
     if not df_filtrado.empty:
-        # Donut Chart
         if 'TIPO_PROP' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Distribución por Tenencia</div>', unsafe_allow_html=True)
             df_pie = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
@@ -443,7 +431,6 @@ with col_der:
             fig_pie.update_traces(textposition='inside', textinfo='percent')
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-        # Bar Chart (Categoría)
         st.markdown('<div class="chart-title">Inversión por Categoría</div>', unsafe_allow_html=True)
         df_bar = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         color_map_inst = {"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}
