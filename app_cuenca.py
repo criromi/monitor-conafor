@@ -295,7 +295,7 @@ with col_centro:
                     fields=campos_validos, 
                     aliases=lista_alias,
                     # 👇 AQUÍ ES EL CAMBIO: Cambia 12px por 10px
-                    style=("background-color: white; color: #333333; font-family: arial; font-size: 10px; padding: 8px;")
+                    style=("background-color: white; color: #333333; font-family: arial; font-size: 8px; padding: 8px;")
                 )
             ).add_to(m)
 
