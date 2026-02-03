@@ -25,7 +25,7 @@ COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO: TARJETA LIMPIA Y SENCILLA)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO FINAL: SENCILLO Y BOTÓN CENTRADO)
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
@@ -41,7 +41,7 @@ if not st.session_state.acceso_concedido:
             ruta_logo = path
             break
 
-    # CSS PARA CENTRAR Y ESTILAR LA TARJETA
+    # CSS ESPECÍFICO PARA EL LOGIN
     st.markdown(f"""
         <style>
         /* Ocultar elementos base */
@@ -49,84 +49,96 @@ if not st.session_state.acceso_concedido:
         
         /* 1. Fondo General Gris Suave */
         .stApp {{
-            background-color: #FFFF;
+            background-color: #EEF2F6;
         }}
         
-        /* 2. Estilo de la Columna Central (La Tarjeta) */
-        /* Apuntamos a la segunda columna que crearemos abajo */
+        /* 2. Estilo de la Tarjeta (Columna Central) */
         div[data-testid="column"]:nth-of-type(2) {{
             background-color: white;
-            padding: 2rem 3rem;
+            padding: 3rem;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra suave */
-            border-top: 6px solid {COLOR_PRIMARIO}; /* Detalle verde arriba */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-top: 6px solid {COLOR_PRIMARIO};
+            text-align: center; /* Asegura que textos e imágenes se centren */
         }}
 
-        /* 3. Botón personalizado */
+        /* 3. CENTRAR EL BOTÓN */
+        div.stButton {{
+            text-align: center; /* Centra el contenedor del botón */
+            display: flex;
+            justify-content: center;
+        }}
+        
         div.stButton > button {{
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
-            width: 150%;
-            border-radius: 6px !important;
+            width: 60% !important;  /* <-- ANCHO DEL BOTÓN (AJUSTADO) */
+            margin: 0 auto !important; /* <-- ESTO LO CENTRA */
+            display: block !important;
+            border-radius: 20px !important; /* Bordes más redondos */
             font-weight: bold !important;
             border: none !important;
             padding: 0.6rem !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }}
         div.stButton > button:hover {{
             background-color: {COLOR_SECUNDARIO} !important;
+            transform: scale(1.02);
+            transition: 0.2s;
         }}
         
-        /* 4. Inputs más limpios */
+        /* 4. Inputs limpios */
         div[data-testid="stTextInput"] input {{
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid #ddd;
+            text-align: center; /* Texto de contraseña centrado */
+            padding: 10px;
         }}
         </style>
     """, unsafe_allow_html=True)
 
-    # ESTRUCTURA DE COLUMNAS PARA CENTRAR
-    # Usamos 3 columnas: [Espacio, TARJETA, Espacio]
-    # Ajustamos los anchos para que la tarjeta no sea ni muy ancha ni muy angosta
+    # ESTRUCTURA DE COLUMNAS
     col_izq, col_login, col_der = st.columns([1, 1, 1])
 
     with col_login:
-        # Espaciador vertical para bajar la tarjeta y que no quede pegada arriba
         st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
         
-        # --- CONTENIDO DE LA TARJETA ---
+        # --- CONTENIDO ---
         if ruta_logo:
-            st.image(ruta_logo, use_container_width=True)
+            st.image(ruta_logo, width=180) # Logo centrado por defecto en st.image dentro de columna
         else:
-            st.markdown("<h1 style='text-align:center;'>🌲</h1>", unsafe_allow_html=True)
+            st.markdown("<h1>🌲</h1>", unsafe_allow_html=True)
         
         st.markdown(f"""
-            <h2 style='text-align: center; color: {COLOR_SECUNDARIO}; font-size: 1.2rem; margin-bottom: 5px;'>
+            <h2 style='color: {COLOR_PRIMARIO}; font-size: 1.6rem; margin-top: 10px; margin-bottom: 5px; font-weight: 800;'>
                 MONITOR DE PROYECTOS
             </h2>
-            <p style='text-align: center; color: {COLOR_PRIMARIO}; font-size: 2.2rem; margin-bottom: 5px;'>
-                Cuenca Lerma-Santiago
+            <p style='color: #666; font-size: 0.95rem; margin-bottom: 30px; letter-spacing: 1px;'>
+                CUENCA LERMA-SANTIAGO
             </p>
         """, unsafe_allow_html=True)
 
-        password = st.text_input("Código de Acceso", type="password", label_visibility="collapsed", placeholder="Contraseña")
+        password = st.text_input("Password", type="password", label_visibility="collapsed", placeholder="Código de Acceso")
+        
+        st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
         
         if st.button("INGRESAR"):
-            if password == "conafor2026":
+            if password == "Conafor2026":
                 st.session_state.acceso_concedido = True
                 st.rerun()
             else:
                 st.error("Credenciales incorrectas")
 
         st.markdown("""
-            <div style='text-align: center; margin-top: 20px; font-size: 0.7rem; color: #aaa;'>
+            <div style='margin-top: 30px; font-size: 0.7rem; color: #bbb;'>
                 Comisión Nacional Forestal &copy; 2026
             </div>
         """, unsafe_allow_html=True)
 
-    st.stop() # 🛑 DETIENE EL CÓDIGO AQUÍ
+    st.stop()
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO FUNCIONAL INTACTO)
+# 🚀 APLICACIÓN PRINCIPAL
 # ==============================================================================
 
 # --- Funciones auxiliares para la app principal ---
@@ -147,7 +159,7 @@ for ext in [".png", ".jpg", ".jpeg"]:
         ext_encontrada_app = "png" if ext == ".png" else "jpeg"
         break
 
-# --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
+# --- 2. ESTILOS CSS (APP PRINCIPAL) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
