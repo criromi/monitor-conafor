@@ -18,30 +18,30 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
-COLOR_FONDO_PANEL = "#F0F2F5"   # Gris suave para el panel lateral
+COLOR_FONDO_PANEL = "#E6E8EB"   # Gris "panel" (como en tu imagen)
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (DISEÑO LIMPIO) ---
+# --- 2. ESTILOS CSS (DISEÑO TIPO PANEL UNIFICADO) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* --- 1. PANEL IZQUIERDO (TODA LA COLUMNA GRIS) --- */
+    /* --- 1. PANEL IZQUIERDO (BLOQUE GRIS ÚNICO) --- */
+    /* Apuntamos al primer contenedor de columna para hacerlo gris completo */
     div[data-testid="column"]:nth-of-type(1) > div {{
-        background-color: {COLOR_FONDO_PANEL}; 
-        border-radius: 12px;
-        padding: 20px;
+        background-color: {COLOR_FONDO_PANEL};
+        border-radius: 15px; /* Bordes redondeados como en la imagen */
+        padding: 25px;
         border: 1px solid #dcdcdc;
-        height: 100%; /* Para que el gris llegue hasta abajo */
     }}
 
-    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS) --- */
+    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS INDIVIDUALES) --- */
     div[data-testid="column"]:nth-of-type(2) > div,
     div[data-testid="column"]:nth-of-type(3) > div {{
         background-color: white;
@@ -51,46 +51,49 @@ st.markdown(f"""
         border: 1px solid #e0e0e0;
     }}
     
-    /* --- CHECKBOXES (LIMPIOS Y TRANSPARENTES) --- */
-    /* Quitamos el fondo blanco y los bordes para que se integren al gris */
+    /* --- CHECKBOXES "TRANSPARENTES" --- */
+    /* Eliminamos fondo y borde para que se integren al panel gris */
     div[data-testid="stCheckbox"] {{
-        background-color: transparent !important; 
+        background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 5px 0px; /* Reducimos espacio */
+        padding: 0px !important;
         margin-bottom: 5px;
     }}
-
-    /* Texto del checkbox más grande y oscuro */
+    
+    /* Texto de los checkboxes (Negro y fuerte) */
     div[data-testid="stCheckbox"] label p {{
-        color: #333333 !important; 
+        color: #222222 !important; 
         font-weight: 700 !important;
-        font-size: 1.05rem !important;
+        font-size: 1rem !important;
     }}
+    
+    /* El cuadrito de selección (tick box) */
     div[data-testid="stCheckbox"] label span {{
-        background-color: white !important; /* El cuadrito chiquito de palomear */
-        border: 1px solid #999 !important;
+        background-color: white !important;
+        border: 2px solid #555 !important;
     }}
 
     /* --- ENCABEZADOS DE SECCIÓN --- */
     .section-header {{
         color: {COLOR_PRIMARIO};
-        font-weight: 800;
-        border-bottom: 2px solid {COLOR_ACENTO};
+        font-weight: 900;
+        text-transform: uppercase;
+        border-bottom: 3px solid {COLOR_ACENTO};
         padding-bottom: 5px;
         margin-bottom: 15px;
         font-size: 1.1rem;
-        margin-top: 5px;
+        letter-spacing: 0.5px;
     }}
 
     /* --- MÉTRICAS --- */
     .metric-container {{
-        background-color: {COLOR_FONDO_PANEL};
+        background-color: #F8F9FA;
         border-radius: 8px;
         padding: 12px;
         margin-bottom: 8px;
         text-align: center;
-        border: 1px solid #dcdcdc;
+        border: 1px solid #eee;
     }}
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; }}
     .metric-value-total {{ font-size: 1.5rem; font-weight: 900; color: {COLOR_SECUNDARIO}; }}
@@ -176,18 +179,23 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA) - TODO EL FONDO GRIS AQUÍ
+# 1. CONTROLES (IZQUIERDA) - TODO EN UN SOLO PANEL GRIS
 # =========================================================
 with col_izq:
+    # Espaciado superior para que respire
+    st.markdown('<div style="margin-top: 10px;"></div>', unsafe_allow_html=True)
+    
+    # 1. VISUALIZACIÓN
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
-    # Checkboxes simples (se verán sobre el fondo gris general)
+    # Checkboxes limpios (sin cuadros blancos)
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
+    # Nota informativa estilo "aviso"
     st.markdown("""
-        <div style="margin-top:20px; margin-bottom:20px; font-size:0.85rem; color:#444; border-top:1px solid #ccc; padding-top:10px;">
+        <div style="margin-top:20px; font-size:0.85rem; color:#444; background:rgba(255,255,255,0.5); padding:10px; border-radius:8px; border-left:4px solid #17a2b8;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
@@ -208,12 +216,13 @@ col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'S
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 num_proy = len(df_filtrado)
 
-# SECCIÓN DE DESCARGAS (Dentro de columna izquierda)
+# 2. SECCIÓN DE DESCARGAS (CONTINÚA EN LA MISMA COLUMNA GRIS)
 with col_izq:
-    st.markdown('<div class="section-header" style="margin-top:10px;">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 30px;"></div>', unsafe_allow_html=True) # Separador
+    st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
 
     if not df_filtrado.empty:
-        # 1. EXCEL
+        # EXCEL
         nombres_excel = {
             'FOL_PROG': 'FOLIO', 'SOLICITANT': 'BENEFICIARIO', 'ESTADO': 'ESTADO', 
             'MUNICIPIO': 'MUNICIPIO', 'TIPO_PROP': 'RÉGIMEN', 'TIPO_CAPA': 'CATEGORÍA', 
@@ -237,7 +246,7 @@ with col_izq:
             use_container_width=True
         )
 
-        # 2. SHAPEFILE ZIPPED
+        # SHAPEFILE
         try:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 ruta_shp = os.path.join(tmp_dir, "Proyectos_CONAFOR.shp")
@@ -248,7 +257,6 @@ with col_izq:
                     for archivo in os.listdir(tmp_dir):
                         ruta_completa = os.path.join(tmp_dir, archivo)
                         zf.write(ruta_completa, arcname=archivo)
-                
                 buffer_zip.seek(0)
                 
                 st.download_button(
@@ -263,7 +271,7 @@ with col_izq:
             st.error(f"Error generando Shapefile: {e}")
 
 # =========================================================
-# 2. MAPA (CENTRO)
+# 2. MAPA (CENTRO) - SIN CAMBIOS (COMO PEDISTE)
 # =========================================================
 with col_centro:
     try:
@@ -331,7 +339,6 @@ with col_centro:
     
     st_folium(m, width="100%", height=600, returned_objects=[])
 
-    # --- GRÁFICAS INFERIORES ---
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     col_chart1, col_chart2 = st.columns(2, gap="medium")
     
@@ -393,7 +400,7 @@ with col_der:
         <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
     </div>
     
-    <div style="text-align:center; margin-bottom:15px; background:{COLOR_FONDO_PANEL}; padding:10px; border-radius:8px; border:1px solid #dcdcdc;">
+    <div style="text-align:center; margin-bottom:15px; background:#F8F9FA; padding:10px; border-radius:8px; border:1px solid #dcdcdc;">
         <div class="metric-label">PROYECTOS APOYADOS</div>
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
