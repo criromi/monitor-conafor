@@ -46,100 +46,159 @@ for ext in [".png", ".jpg", ".jpeg"]:
         break
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD (DISEÑO MEJORADO)
+# 🔐 SISTEMA DE SEGURIDAD (DISEÑO PROFESIONAL "HIGH-END")
 # ==============================================================================
 if 'acceso_concedido' not in st.session_state:
     st.session_state.acceso_concedido = False
 
 if not st.session_state.acceso_concedido:
-    # CSS Específico para el Login
+    # CSS PARA ELIMINAR EL CUADRO FANTASMA Y CENTRAR
     st.markdown(f"""
         <style>
+        /* 1. Ocultar elementos base de Streamlit para limpiar la pantalla */
+        header {{visibility: hidden;}}
+        footer {{visibility: hidden;}}
+        
+        /* 2. Fondo general elegante */
         .stApp {{
-            background-color: #f4f6f9; /* Fondo gris muy suave */
+            background-color: #EEF2F6;
+            background-image: radial-gradient(#dce4ec 1px, transparent 1px);
+            background-size: 20px 20px;
         }}
-        .login-container {{
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+        /* 3. ELIMINAR EL ESPACIO EN BLANCO SUPERIOR (El error del cuadro extra) */
+        .block-container {{
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            max-width: 100% !important;
+        }}
+
+        /* 4. Contenedor de la Tarjeta (Centrado Absoluto) */
+        .login-wrapper {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh; /* Ocupa casi toda la altura */
+            width: 100%;
+        }}
+
+        /* 5. La Tarjeta de Login */
+        .login-card {{
+            background: white;
+            padding: 3rem;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08); /* Sombra suave y profunda */
             text-align: center;
-            border-top: 8px solid {COLOR_SECUNDARIO}; /* Borde Guinda Institucional */
-            max-width: 450px;
-            margin: 0 auto;
+            border-top: 8px solid {COLOR_SECUNDARIO}; /* Borde Institucional */
+            border-bottom: 8px solid {COLOR_PRIMARIO};
+            position: relative;
         }}
-        .login-title {{
-            color: {COLOR_PRIMARIO};
-            font-family: Arial, sans-serif;
+
+        /* Estilos de Texto */
+        .login-header {{
+            margin-bottom: 1.5rem;
+        }}
+        .app-title {{
+            font-family: 'Arial', sans-serif;
+            font-size: 1.8rem;
             font-weight: 800;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            margin-top: 15px;
+            color: {COLOR_PRIMARIO};
+            margin-top: 10px;
+            letter-spacing: -0.5px;
         }}
-        .login-subtitle {{
-            color: #666;
-            font-weight: 400;
+        .app-subtitle {{
             font-size: 1rem;
-            margin-bottom: 25px;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }}
-        /* Personalizar el botón de Streamlit solo para esta pantalla */
+
+        /* Botón Personalizado */
         div.stButton > button {{
             background-color: {COLOR_PRIMARIO} !important;
             color: white !important;
-            border: none !important;
-            font-weight: bold !important;
-            padding: 0.5rem 1rem !important;
-            border-radius: 5px !important;
             width: 100%;
+            padding: 0.6rem !important;
+            font-size: 1.1rem !important;
+            border-radius: 8px !important;
+            font-weight: bold !important;
+            border: none !important;
+            box-shadow: 0 4px 6px rgba(19, 50, 43, 0.2);
+            transition: all 0.3s ease;
         }}
         div.stButton > button:hover {{
-            background-color: #0e2621 !important; /* Un verde un poco más oscuro al pasar mouse */
+            background-color: {COLOR_SECUNDARIO} !important;
+            box-shadow: 0 6px 12px rgba(157, 36, 73, 0.3);
+            transform: translateY(-2px);
+        }}
+        
+        /* Input Field más bonito */
+        div[data-testid="stTextInput"] input {{
+            border-radius: 8px !important;
+            border: 1px solid #ddd !important;
+            padding: 10px 15px !important;
+            font-size: 1rem !important;
+        }}
+        div[data-testid="stTextInput"] input:focus {{
+            border-color: {COLOR_PRIMARIO} !important;
+            box-shadow: 0 0 0 2px rgba(19, 50, 43, 0.1) !important;
         }}
         </style>
     """, unsafe_allow_html=True)
     
-    # Columnas para centrar la tarjeta vertical y horizontalmente
-    col1, col2, col3 = st.columns([1, 1.5, 1])
+    # ESTRUCTURA HTML LIMPIA (USANDO COLUMNAS PARA CENTRAR EL CONTENIDO)
+    col_vacio1, col_centro, col_vacio2 = st.columns([1, 2, 1])
     
-    with col2:
-        st.markdown("<br><br>", unsafe_allow_html=True) # Espacio arriba
+    with col_centro:
+        # Espaciador vertical para bajarlo al centro visual
+        st.markdown("<div style='height: 15vh;'></div>", unsafe_allow_html=True)
         
-        # INICIO TARJETA
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        # INICIO DE TARJETA
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         
         # 1. LOGO
         if logo_b64:
-            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="180">', unsafe_allow_html=True)
+            st.markdown(f'<img src="data:image/{ext_encontrada};base64,{logo_b64}" width="200" style="margin-bottom:10px;">', unsafe_allow_html=True)
         else:
             st.markdown("🌲", unsafe_allow_html=True)
 
-        # 2. TEXTOS
-        st.markdown('<div class="login-title">MONITOR DE PROYECTOS</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-subtitle">Cuenca Lerma-Santiago</div>', unsafe_allow_html=True)
-        
-        # 3. INPUT Y BOTÓN
-        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="Ingresa tu código de acceso")
-        
-        if st.button("INGRESAR AL SISTEMA"):
-            if password == "Conafor2026":
-                st.session_state.acceso_concedido = True
-                st.rerun()
-            else:
-                st.error("🔒 Código incorrecto. Verifique sus credenciales.")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        # FIN TARJETA
-
-        st.markdown("""
-            <div style="text-align: center; margin-top: 20px; color: #999; font-size: 0.8rem;">
-            Comisión Nacional Forestal &copy; 2026<br>Uso exclusivo personal autorizado.
+        # 2. TÍTULOS
+        st.markdown(f"""
+            <div class="login-header">
+                <div class="app-title">MONITOR DE PROYECTOS</div>
+                <div class="app-subtitle">Cuenca Lerma-Santiago</div>
             </div>
         """, unsafe_allow_html=True)
         
-    st.stop() # DETIENE LA EJECUCIÓN AQUÍ SI NO HAY ACCESO
+        # 3. FORMULARIO
+        # Usamos placeholder vacío para que se vea limpio
+        password = st.text_input("Contraseña", type="password", label_visibility="collapsed", placeholder="🔒 Ingresa el código de acceso")
+        
+        st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+        
+        if st.button("ACCEDER AL SISTEMA"):
+            if password == "conafor2026":
+                st.session_state.acceso_concedido = True
+                st.rerun()
+            else:
+                st.error("⚠️ Credenciales no válidas")
+        
+        # 4. PIE DE TARJETA
+        st.markdown("""
+            <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 0.75rem; color: #999;">
+                Sistema de Información Geográfica &copy; 2026<br>
+                <b>Comisión Nacional Forestal</b>
+            </div>
+            </div> """, unsafe_allow_html=True)
+
+    st.stop() # DETIENE LA APP AQUÍ
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (SOLO SE EJECUTA SI HAY ACCESO)
+# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO QUE YA FUNCIONA PERFECTO)
 # ==============================================================================
 
 # --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
