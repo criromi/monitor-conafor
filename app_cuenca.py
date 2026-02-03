@@ -18,14 +18,13 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
-COLOR_FONDO_PANEL = "#E9ECEF"   # Gris claro sólido para el panel
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (CORRECCIÓN DE PALOMITAS) ---
+# --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
@@ -33,42 +32,30 @@ st.markdown(f"""
     [data-testid="stSidebar"] {{ display: none; }}
     
     /* =========================================
-       1. PANEL IZQUIERDO (CAJA GRIS ÚNICA)
+       1. PANEL IZQUIERDO (ESTILO TARJETA / CARD)
        ========================================= */
-    div[data-testid="column"]:nth-of-type(1) > div > div {{
-        background-color: {COLOR_FONDO_PANEL};
-        border-radius: 15px;
+    /* En lugar de fondo gris, usamos borde y sombra para separar */
+    div[data-testid="column"]:nth-of-type(1) > div {{
+        background-color: white; /* Fondo blanco seguro */
+        border-radius: 12px;
         padding: 20px;
-        border: 1px solid #ccc;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        gap: 0.5rem;
+        border: 1px solid #e0e0e0; /* Borde sutil */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* Sombra elegante para separar */
+        height: 100%;
     }}
 
     /* =========================================
-       2. CHECKBOXES (SOLUCIÓN DEFINITIVA)
+       2. CHECKBOXES (SEGUROS)
        ========================================= */
-    /* Hacemos transparente el contenedor para que se vea el gris de fondo */
-    div[data-testid="stCheckbox"] {{
-        background-color: transparent !important;
-        padding: 0px !important;
-    }}
-
-    /* Texto: Negro y Negrita */
+    /* No tocamos nada raro aquí para no romper las palomitas */
     div[data-testid="stCheckbox"] label p {{
-        color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
+        color: #333 !important;
     }}
-
-    /* LA PALOMITA (El Icono SVG): Lo forzamos a ser visible */
-    div[data-testid="stCheckbox"] svg {{
-        color: {COLOR_PRIMARIO} !important; /* Verde oscuro */
-        fill: {COLOR_PRIMARIO} !important;
-        stroke: {COLOR_PRIMARIO} !important;
-    }}
-
+    
     /* =========================================
-       3. PANELES CENTRO Y DERECHA (BLANCOS)
+       3. PANELES CENTRO Y DERECHA
        ========================================= */
     div[data-testid="column"]:nth-of-type(2) > div,
     div[data-testid="column"]:nth-of-type(3) > div {{
@@ -88,7 +75,7 @@ st.markdown(f"""
         text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO};
         padding-bottom: 5px;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         font-size: 1.1rem;
     }}
 
@@ -182,10 +169,9 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA) - PANEL GRIS UNIFICADO
+# 1. CONTROLES (IZQUIERDA) - TARJETA LIMPIA
 # =========================================================
 with col_izq:
-    st.markdown('<div style="margin-top: 5px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
     # Checkboxes
@@ -194,7 +180,7 @@ with col_izq:
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
     st.markdown("""
-        <div style="margin-top:20px; font-size:0.85rem; color:#333; background:rgba(255,255,255,0.7); padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
+        <div style="margin-top:20px; font-size:0.85rem; color:#333; background:#F8F9FA; padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
@@ -214,7 +200,7 @@ col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'S
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 num_proy = len(df_filtrado)
 
-# SECCIÓN DESCARGAS (CONTINUACIÓN DEL PANEL GRIS)
+# SECCIÓN DESCARGAS
 with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
