@@ -18,32 +18,32 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
-COLOR_TEXTO = "#333333"         # Gris Oscuro
-COLOR_FONDO_GRIS = "#F4F6F8"    # Gris un poco más notable para el panel
+COLOR_FONDO_PANEL = "#F0F2F5"   # Gris suave para el panel lateral
 
 # Colores Mapa
 COLOR_PSA_MAPA = "#28a745"
 COLOR_PFC_MAPA = "#ffc107"
 COLOR_MFC_MAPA = "#17a2b8"
 
-# --- 2. ESTILOS CSS (AQUÍ ESTÁ LA MAGIA DEL CUADRO GRIS) ---
+# --- 2. ESTILOS CSS (DISEÑO LIMPIO) ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     [data-testid="stSidebar"] {{ display: none; }}
     
-    /* --- 1. COLUMNA IZQUIERDA (CONTROLES) - EL CUADRO GRIS --- */
-    div[data-testid="column"]:nth-of-type(1) {{
-        background-color: {COLOR_FONDO_GRIS}; /* Fondo GRIS para todo el panel */
+    /* --- 1. PANEL IZQUIERDO (TODA LA COLUMNA GRIS) --- */
+    div[data-testid="column"]:nth-of-type(1) > div {{
+        background-color: {COLOR_FONDO_PANEL}; 
         border-radius: 12px;
         padding: 20px;
         border: 1px solid #dcdcdc;
+        height: 100%; /* Para que el gris llegue hasta abajo */
     }}
 
-    /* --- 2. COLUMNAS CENTRO Y DERECHA - FONDO BLANCO --- */
-    div[data-testid="column"]:nth-of-type(2),
-    div[data-testid="column"]:nth-of-type(3) {{
+    /* --- 2. PANELES CENTRO Y DERECHA (BLANCOS) --- */
+    div[data-testid="column"]:nth-of-type(2) > div,
+    div[data-testid="column"]:nth-of-type(3) > div {{
         background-color: white;
         border-radius: 12px;
         padding: 15px;
@@ -51,25 +51,25 @@ st.markdown(f"""
         border: 1px solid #e0e0e0;
     }}
     
-    /* --- CHECKBOXES (BOTONES BLANCOS DENTRO DEL GRIS) --- */
+    /* --- CHECKBOXES (LIMPIOS Y TRANSPARENTES) --- */
+    /* Quitamos el fondo blanco y los bordes para que se integren al gris */
     div[data-testid="stCheckbox"] {{
-        background-color: #FFFFFF !important; /* Blancos para resaltar */
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        border-left: 5px solid {COLOR_SECUNDARIO};
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave */
+        background-color: transparent !important; 
+        border: none !important;
+        box-shadow: none !important;
+        padding: 5px 0px; /* Reducimos espacio */
+        margin-bottom: 5px;
     }}
 
-    /* Texto del checkbox */
+    /* Texto del checkbox más grande y oscuro */
     div[data-testid="stCheckbox"] label p {{
-        color: #000000 !important; 
+        color: #333333 !important; 
         font-weight: 700 !important;
-        font-size: 1rem !important;
-        white-space: nowrap !important;
+        font-size: 1.05rem !important;
     }}
     div[data-testid="stCheckbox"] label span {{
-        color: #000000 !important;
+        background-color: white !important; /* El cuadrito chiquito de palomear */
+        border: 1px solid #999 !important;
     }}
 
     /* --- ENCABEZADOS DE SECCIÓN --- */
@@ -85,12 +85,12 @@ st.markdown(f"""
 
     /* --- MÉTRICAS --- */
     .metric-container {{
-        background-color: {COLOR_FONDO_GRIS};
+        background-color: {COLOR_FONDO_PANEL};
         border-radius: 8px;
         padding: 12px;
         margin-bottom: 8px;
         text-align: center;
-        border: 1px solid #eee;
+        border: 1px solid #dcdcdc;
     }}
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; }}
     .metric-value-total {{ font-size: 1.5rem; font-weight: 900; color: {COLOR_SECUNDARIO}; }}
@@ -158,10 +158,8 @@ def cargar_datos():
     if not os.path.exists(ruta_master): return None, None
     try:
         gdf = gpd.read_parquet(ruta_master).copy()
-        # Asegurar tipos string
         for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'GERENCIA', 'ESTADO', 'SOLICITANT']:
             if c in gdf.columns: gdf[c] = gdf[c].astype(str)
-        # Asegurar tipos numéricos
         for col_num in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
             if col_num not in gdf.columns: gdf[col_num] = 0.0
         cuenca = gpd.read_parquet(ruta_cuenca).copy() if os.path.exists(ruta_cuenca) else None
@@ -178,17 +176,18 @@ if df_total is None:
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # =========================================================
-# 1. CONTROLES (IZQUIERDA) - AHORA DENTRO DEL PANEL GRIS
+# 1. CONTROLES (IZQUIERDA) - TODO EL FONDO GRIS AQUÍ
 # =========================================================
 with col_izq:
     st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
     
+    # Checkboxes simples (se verán sobre el fondo gris general)
     ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
     st.markdown("""
-        <div style="margin-top:20px; margin-bottom:20px; font-size:0.8rem; color:#333; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="margin-top:20px; margin-bottom:20px; font-size:0.85rem; color:#444; border-top:1px solid #ccc; padding-top:10px;">
         ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
         </div>
     """, unsafe_allow_html=True)
@@ -211,7 +210,7 @@ num_proy = len(df_filtrado)
 
 # SECCIÓN DE DESCARGAS (Dentro de columna izquierda)
 with col_izq:
-    st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="margin-top:10px;">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
 
     if not df_filtrado.empty:
         # 1. EXCEL
@@ -264,7 +263,7 @@ with col_izq:
             st.error(f"Error generando Shapefile: {e}")
 
 # =========================================================
-# 2. MAPA (CENTRO) + GRÁFICOS INFERIORES
+# 2. MAPA (CENTRO)
 # =========================================================
 with col_centro:
     try:
@@ -276,28 +275,23 @@ with col_centro:
             clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
 
-    # Mapa optimizado
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
     folium.TileLayer("CartoDB positron", control=False).add_to(m)
 
     if cuenca is not None:
         folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        # ENCUADRE AUTOMÁTICO
         bounds = cuenca.total_bounds
         m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
     config_capas = {"PSA": COLOR_PSA_MAPA, "PFC": COLOR_PFC_MAPA, "MFC": COLOR_MFC_MAPA}
 
-    # --- DATOS PARA MAPA ---
     df_mapa = df_filtrado.copy()
     df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
     if col_sup:
         df_mapa['SUP_FMT'] = df_mapa[col_sup].apply(lambda x: "{:,.1f}".format(x))
 
-    # --- ALIAS TOOLTIP ---
     campos_deseados = ['SOLICITANT','FOL_PROG', 'ESTADO', 'MUNICIPIO', 'TIPO_PROP', 'MONTO_FMT', 'CONCEPTO']
     if col_sup: campos_deseados.append('SUP_FMT')
-    
     campos_validos = [c for c in campos_deseados if c in df_mapa.columns]
 
     diccionario_alias = {
@@ -339,18 +333,13 @@ with col_centro:
 
     # --- GRÁFICAS INFERIORES ---
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
-    
     col_chart1, col_chart2 = st.columns(2, gap="medium")
     
     with col_chart1:
         if not df_filtrado.empty and 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios por Inversión</div>', unsafe_allow_html=True)
             df_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            
-            fig_mun = px.bar(
-                df_mun, x='MUNICIPIO', y='MONTO_TOT',
-                text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO]
-            )
+            fig_mun = px.bar(df_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
             fig_mun.update_layout(
                 xaxis_title=None, yaxis_title=None,
                 xaxis=dict(tickfont=dict(size=10, color="black"), categoryorder='total descending'), 
@@ -367,11 +356,7 @@ with col_centro:
             st.markdown('<div class="chart-title">Top 10 Conceptos de Apoyo</div>', unsafe_allow_html=True)
             df_con = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             df_con['CONCEPTO_CORTO'] = df_con['CONCEPTO'].apply(lambda x: x[:30] + '...' if len(x) > 30 else x)
-            
-            fig_con = px.bar(
-                df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', orientation='h',
-                text_auto='.2s', color_discrete_sequence=[COLOR_SECUNDARIO]
-            )
+            fig_con = px.bar(df_con, y='CONCEPTO_CORTO', x='MONTO_TOT', orientation='h', text_auto='.2s', color_discrete_sequence=[COLOR_SECUNDARIO])
             fig_con.update_layout(
                 xaxis_title=None, yaxis_title=None,
                 xaxis=dict(showgrid=True, gridcolor="#eee", showticklabels=False),
@@ -408,7 +393,7 @@ with col_der:
         <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
     </div>
     
-    <div style="text-align:center; margin-bottom:15px; background:{COLOR_FONDO_GRIS}; padding:10px; border-radius:8px; border:1px solid #eee;">
+    <div style="text-align:center; margin-bottom:15px; background:{COLOR_FONDO_PANEL}; padding:10px; border-radius:8px; border:1px solid #dcdcdc;">
         <div class="metric-label">PROYECTOS APOYADOS</div>
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
@@ -433,11 +418,7 @@ with col_der:
 
         st.markdown('<div class="chart-title">Inversión por Categoría</div>', unsafe_allow_html=True)
         df_bar = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-        color_map_inst = {"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}
-        fig_bar = px.bar(
-            df_bar, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA',
-            color_discrete_map=color_map_inst, text_auto='.2s'
-        )
+        fig_bar = px.bar(df_bar, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', color_discrete_map={"PSA": COLOR_PRIMARIO, "PFC": COLOR_SECUNDARIO, "MFC": COLOR_ACENTO}, text_auto='.2s')
         fig_bar.update_layout(
             xaxis_title=None, yaxis_title=None,
             xaxis=dict(tickfont=dict(size=12, color="black")),
@@ -449,7 +430,7 @@ with col_der:
         fig_bar.update_traces(textfont_size=12, textposition='outside', cliponaxis=False, textfont_color="black")
         st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-# --- PIE DE PÁGINA (TABLA LIMPIA) ---
+# --- PIE DE PÁGINA ---
 st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 with st.expander("📋 Ver Base de Datos Completa"):
     df_tabla = df_filtrado.drop(columns=['geometry'], errors='ignore').copy()
@@ -460,5 +441,4 @@ with st.expander("📋 Ver Base de Datos Completa"):
     }
     df_tabla = df_tabla.rename(columns=nombres_columnas)
     cols_visibles = [nombre for nombre in nombres_columnas.values() if nombre in df_tabla.columns]
-
     st.dataframe(df_tabla[cols_visibles], use_container_width=True, hide_index=True)
