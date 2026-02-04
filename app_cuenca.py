@@ -53,13 +53,12 @@ if not st.session_state.acceso_concedido:
         }}
         
         /* 2. Estilo de la Columna Central (La Tarjeta) */
-        /* Apuntamos a la segunda columna que crearemos abajo */
         div[data-testid="column"]:nth-of-type(2) {{
             background-color: white;
             padding: 2rem 3rem;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra suave */
-            border-top: 6px solid {COLOR_PRIMARIO}; /* Detalle verde arriba */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-top: 6px solid {COLOR_PRIMARIO};
         }}
 
         /* 3. Botón personalizado */
@@ -85,15 +84,11 @@ if not st.session_state.acceso_concedido:
     """, unsafe_allow_html=True)
 
     # ESTRUCTURA DE COLUMNAS PARA CENTRAR
-    # Usamos 3 columnas: [Espacio, TARJETA, Espacio]
-    # Ajustamos los anchos para que la tarjeta no sea ni muy ancha ni muy angosta
     col_izq, col_login, col_der = st.columns([1, 1, 1])
 
     with col_login:
-        # Espaciador vertical para bajar la tarjeta y que no quede pegada arriba
         st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
         
-        # --- CONTENIDO DE LA TARJETA ---
         if ruta_logo:
             st.image(ruta_logo, use_container_width=True)
         else:
@@ -123,10 +118,10 @@ if not st.session_state.acceso_concedido:
             </div>
         """, unsafe_allow_html=True)
 
-    st.stop() # 🛑 DETIENE EL CÓDIGO AQUÍ
+    st.stop() 
 
 # ==============================================================================
-# 🚀 APLICACIÓN PRINCIPAL (CÓDIGO FUNCIONAL INTACTO)
+# 🚀 APLICACIÓN PRINCIPAL
 # ==============================================================================
 
 # --- Funciones auxiliares para la app principal ---
@@ -147,7 +142,7 @@ for ext in [".png", ".jpg", ".jpeg"]:
         ext_encontrada_app = "png" if ext == ".png" else "jpeg"
         break
 
-# --- 2. ESTILOS CSS (ESTRATEGIA TARJETA / CARD) ---
+# --- 2. ESTILOS CSS ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
@@ -237,8 +232,8 @@ else:
     """
 st.markdown(html_header, unsafe_allow_html=True)
 
-# --- 4. DATOS (MODIFICADO PARA SOPORTAR CARGA DINÁMICA) ---
-@st.cache_data(ttl=600) # Se refresca cada 10 mins
+# --- 4. DATOS (MODIFICADO Y CORREGIDO) ---
+@st.cache_data(ttl=600) 
 def cargar_datos():
     carpeta_datos = 'datos_web'
     ruta_cuenca = os.path.join(carpeta_datos, 'cuenca_web.parquet')
@@ -247,6 +242,7 @@ def cargar_datos():
     capas_admin = ["PSA", "PFC", "MFC"]
     gdfs_lista = []
     
+    # Intentamos cargar capas individuales si existen
     for capa in capas_admin:
         ruta = os.path.join(carpeta_datos, f"capa_{capa}_procesada.parquet")
         if os.path.exists(ruta):
@@ -254,6 +250,8 @@ def cargar_datos():
                 g = gpd.read_parquet(ruta)
                 # Asegurar CRS correcto
                 if g.crs and g.crs.to_string() != "EPSG:4326": g = g.to_crs("EPSG:4326")
+                # Asegurar etiqueta
+                if 'TIPO_CAPA' not in g.columns: g['TIPO_CAPA'] = capa
                 gdfs_lista.append(g)
             except: pass
             
@@ -283,6 +281,14 @@ def cargar_datos():
     cuenca = gpd.read_parquet(ruta_cuenca) if os.path.exists(ruta_cuenca) else None
     
     return gdf, cuenca
+
+# --- EJECUCIÓN DE CARGA (AQUÍ ESTABA EL ERROR ANTES) ---
+df_total, cuenca = cargar_datos()
+
+if df_total is None:
+    st.info("👋 ¡Hola! El sistema está listo pero no hay datos cargados.")
+    st.warning("Ve al menú de la izquierda > 'admin' para subir tu primera capa.")
+    st.stop()
 
 # --- 5. LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
@@ -384,12 +390,19 @@ with col_centro:
 
     if cuenca is not None:
         folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        bounds = cuenca.total_bounds
-        m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+        try:
+            bounds = cuenca.total_bounds
+            m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+        except: pass
 
     config_capas = {"PSA": COLOR_PSA_MAPA, "PFC": COLOR_PFC_MAPA, "MFC": COLOR_MFC_MAPA}
     df_mapa = df_filtrado.copy()
-    df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
+    
+    if 'MONTO_TOT' in df_mapa.columns:
+        df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
+    else:
+        df_mapa['MONTO_FMT'] = "0.00"
+        
     if col_sup: df_mapa['SUP_FMT'] = df_mapa[col_sup].apply(lambda x: "{:,.1f}".format(x))
 
     campos_deseados = ['SOLICITANT','FOL_PROG', 'ESTADO', 'MUNICIPIO', 'TIPO_PROP', 'MONTO_FMT', 'CONCEPTO']
@@ -408,7 +421,7 @@ with col_centro:
         if not subset.empty:
             folium.GeoJson(
                 subset, name=tipo, smooth_factor=2.0,
-                style_function=lambda x, c=config_capas[tipo]: {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
+                style_function=lambda x, c=config_capas.get(tipo, "gray"): {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
                 tooltip=folium.GeoJsonTooltip(
                     fields=campos_validos, 
                     aliases=lista_alias,
