@@ -152,7 +152,6 @@ st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
-    [data-testid="stSidebar"] {{ display: none; }}
     
     /* PANEL IZQUIERDO (TARJETA) */
     div[data-testid="column"]:nth-of-type(1) > div {{
