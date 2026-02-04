@@ -238,27 +238,52 @@ else:
     """
 st.markdown(html_header, unsafe_allow_html=True)
 
-# --- 4. DATOS ---
-@st.cache_data
+# --- 4. DATOS (MODIFICADO PARA SOPORTAR CARGA DINÁMICA) ---
+@st.cache_data(ttl=600) # Se refresca cada 10 mins
 def cargar_datos():
-    ruta_master = os.path.join('datos_web', 'db_master.parquet')
-    ruta_cuenca = os.path.join('datos_web', 'cuenca_web.parquet')
-    if not os.path.exists(ruta_master): return None, None
-    try:
-        gdf = gpd.read_parquet(ruta_master).copy()
-        for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'GERENCIA', 'ESTADO', 'SOLICITANT']:
-            if c in gdf.columns: gdf[c] = gdf[c].astype(str)
-        for col_num in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
-            if col_num not in gdf.columns: gdf[col_num] = 0.0
-        cuenca = gpd.read_parquet(ruta_cuenca).copy() if os.path.exists(ruta_cuenca) else None
-        return gdf, cuenca
-    except: return None, None
+    carpeta_datos = 'datos_web'
+    ruta_cuenca = os.path.join(carpeta_datos, 'cuenca_web.parquet')
+    
+    # 1. Intentar cargar capas individuales (NUEVO SISTEMA ADMIN)
+    capas_admin = ["PSA", "PFC", "MFC"]
+    gdfs_lista = []
+    
+    for capa in capas_admin:
+        ruta = os.path.join(carpeta_datos, f"capa_{capa}_procesada.parquet")
+        if os.path.exists(ruta):
+            try:
+                g = gpd.read_parquet(ruta)
+                # Asegurar CRS correcto
+                if g.crs and g.crs.to_string() != "EPSG:4326": g = g.to_crs("EPSG:4326")
+                gdfs_lista.append(g)
+            except: pass
+            
+    # 2. Si encontramos capas nuevas, las unimos
+    if gdfs_lista:
+        gdf = pd.concat(gdfs_lista, ignore_index=True)
+    else:
+        # 3. FALLBACK: Si no hay capas nuevas, usar el master antiguo
+        ruta_master = os.path.join(carpeta_datos, 'db_master.parquet')
+        if os.path.exists(ruta_master):
+            gdf = gpd.read_parquet(ruta_master)
+        else:
+            return None, None # No hay datos
 
-df_total, cuenca = cargar_datos()
+    # Limpieza final para evitar errores en gráficas
+    for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT']:
+        if c in gdf.columns: gdf[c] = gdf[c].astype(str)
+    
+    # Asegurar que existan las columnas de dinero (rellenar con 0 si faltan)
+    for col_dinero in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
+        if col_dinero not in gdf.columns: 
+            gdf[col_dinero] = 0.0
+        else:
+            gdf[col_dinero] = pd.to_numeric(gdf[col_dinero], errors='coerce').fillna(0)
 
-if df_total is None:
-    st.error("⚠️ Error de carga. Ejecuta 'optimizador_cuenca.py'.")
-    st.stop()
+    # Cargar Cuenca
+    cuenca = gpd.read_parquet(ruta_cuenca) if os.path.exists(ruta_cuenca) else None
+    
+    return gdf, cuenca
 
 # --- 5. LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")

@@ -4,6 +4,6 @@ pandas
 folium
 streamlit-folium
 plotly
-branca
 xlsxwriter
-pyarrow
+requests          <-- ¡Asegúrate de agregar esta!
+branca
