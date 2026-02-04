@@ -1,9 +1,10 @@
 streamlit
-geopandas
 pandas
+geopandas
 folium
 streamlit-folium
 plotly
 xlsxwriter
-requests          <-- ¡Asegúrate de agregar esta!
+requests
 branca
+openpyxl
