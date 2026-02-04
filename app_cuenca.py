@@ -303,9 +303,15 @@ with col_izq:
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
+    # === AQUÍ VA EL BOTÓN NUEVO ===
+    if st.button("🔄 ACTUALIZAR DATOS", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+    # ==============================
+
     st.markdown("""
-        <div style="margin-top:20px; font-size:0.85rem; color:#333; background:#F8F9FA; padding:12px; border-radius:8px; border-left:4px solid #17a2b8;">
-        ℹ️ <b>Nota:</b> Desactiva capas para filtrar el cálculo de inversión y actualizar las gráficas.
+        <div style="margin-top:20px; font-size:0.85rem; ...">
+        ℹ️ <b>Nota:</b> ...
         </div>
     """, unsafe_allow_html=True)
 
