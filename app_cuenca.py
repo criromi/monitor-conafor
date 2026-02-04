@@ -285,11 +285,10 @@ def cargar_datos():
 # --- EJECUCIÓN DE CARGA (AQUÍ ESTABA EL ERROR ANTES) ---
 df_total, cuenca = cargar_datos()
 
-if df_total is None:
-    st.info("👋 ¡Hola! El sistema está listo pero no hay datos cargados.")
-    st.warning("Ve al menú de la izquierda > 'admin' para subir tu primera capa.")
-    st.stop()
-
+# --- NUEVO: Guardar hora de actualización ---
+if 'ultima_actualizacion' not in st.session_state:
+    from datetime import datetime
+    st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
 # --- 5. LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
@@ -297,24 +296,23 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 # 1. CONTROLES (IZQUIERDA)
 # =========================================================
 with col_izq:
-    st.markdown('<div class="section-header">🎛️ VISUALIZACIÓN</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🎛️ FILTROS</div>', unsafe_allow_html=True)
+    ver_psa = st.checkbox("🟩 PSA", value=True)
+    ver_pfc = st.checkbox("🟨 PFC", value=True)
+    ver_mfc = st.checkbox("🟦 MFC", value=True)
     
-    ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
-    ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
-    ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
-    
-    # === AQUÍ VA EL BOTÓN NUEVO ===
+    # BOTÓN ACTUALIZAR
+    st.markdown("---")
     if st.button("🔄 ACTUALIZAR DATOS", use_container_width=True):
         st.cache_data.clear()
+        st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
+        st.toast("Sincronizando con GitHub...", icon="📥")
         st.rerun()
-    # ==============================
+    
+    st.markdown(f"""<p style='text-align:center; font-size:0.7rem; color:gray;'>
+        Datos leídos a las: {st.session_state.ultima_actualizacion}</p>""", unsafe_allow_html=True)
 
-    st.markdown("""
-        <div style="margin-top:20px; font-size:0.85rem; ...">
-        ℹ️ <b>Nota:</b> ...
-        </div>
-    """, unsafe_allow_html=True)
-
+# --- LÓGICA DE FILTRADO ---
 capas = []
 if ver_psa: capas.append("PSA")
 if ver_pfc: capas.append("PFC")
