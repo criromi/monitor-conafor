@@ -49,7 +49,7 @@ CATALOGO_CAPAS = {
     "CUSTF": { 
         "nombre": "Compensación Ambiental", 
         "color_mapa": "#ca520c",       # Naranja ladrillo para el mapa
-        "color_chart": "#6f42c1"       # Morado para la gráfica (o usa un institucional si prefieres)
+        "color_chart": "#6e170b"       # Morado para la gráfica (o usa un institucional si prefieres)
     }
 }
 
@@ -440,13 +440,13 @@ with col_der:
     """, unsafe_allow_html=True)
     
     if not df_filtrado.empty:
-        st.markdown('<div class="chart-title">Inversión por Gerencia</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
         
         f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', 
                    color_discrete_map=color_map_chart, text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'GERENCIA'})
+                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'PROGRAMA'})
         
         f.update_layout(height=250, showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
