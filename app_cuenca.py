@@ -448,7 +448,7 @@ with col_der:
     """, unsafe_allow_html=True)
     
     if not df_filtrado.empty:
-        st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
         
         # --- SOLUCIÓN BLINDADA (Graph Objects) ---
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
@@ -467,7 +467,7 @@ with col_der:
         )])
         
         fig_go.update_layout(
-            xaxis_title="DEPENDENCIA",
+            xaxis_title="PROGRAMA",
             yaxis_title="MONTO TOTAL",
             height=250,
             margin=dict(t=10, b=10),
