@@ -63,9 +63,10 @@ def procesar_zip_upload(archivo_zip, tipo_capa, df_csv_extra=None):
             
             if col_fol_shp and col_fol_csv:
                 # 1. Normalizar folios (quitar espacios y asegurar que sean texto)
+                # Asegúrate de que esta parte esté en tu backend_admin.py
                 gdf[col_fol_shp] = gdf[col_fol_shp].astype(str).str.strip()
                 df_csv_extra[col_fol_csv] = df_csv_extra[col_fol_csv].astype(str).str.strip()
-
+                
                 # 2. BORRAR COLUMNAS DUPLICADAS EN EL MAPA
                 # Si la columna existe en el CSV, la borramos del mapa para que el CSV mande
                 for col_req in COLUMNAS_REQUERIDAS.keys():
