@@ -27,16 +27,15 @@ COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
 
 # ==============================================================================
-# 📋 CATALOGO MAESTRO DE CAPAS (¡AQUÍ AGREGAS TUS NUEVAS ÁREAS!)
+# 📋 CATALOGO MAESTRO DE CAPAS (AQUÍ AGREGAS TUS NUEVAS ÁREAS)
 # ==============================================================================
-# Formato: "CODIGO_CORTO": {"nombre": "Nombre Largo en Pantalla", "color": "Color Hexadecimal"}
 CATALOGO_CAPAS = {
     "PSA": {"nombre": "Servicios Ambientales", "color": "#28a745"},     # Verde
     "PFC": {"nombre": "Plantaciones Forestales", "color": "#ffc107"},   # Amarillo
-    "MFC": {"nombre": "Manejo Forestal Comunitario", "color": "#17a2b8"},           # Azul Cian
-    "CUSTF": {"nombre": "Compensación Ambiental", "color": "#d63384"},          # Rosa (EJEMPLO NUEVO)
-    #"INC": {"nombre": "Incendios", "color": "#fd7e14"},                 # Naranja (EJEMPLO NUEVO)
-    #"OTRAS": {"nombre": "Otras Dependencias", "color": "#6f42c1"}       # Morado (EJEMPLO NUEVO)
+    "MFC": {"nombre": "Manejo Forestal", "color": "#17a2b8"},           # Azul Cian
+    # EJEMPLOS PARA AGREGAR MÁS (Descomenta y edita):
+    # "SAN": {"nombre": "Sanidad Forestal", "color": "#d63384"},
+    # "INC": {"nombre": "Incendios", "color": "#fd7e14"},
 }
 
 # ==============================================================================
@@ -418,7 +417,16 @@ with col_centro:
     if col_sup: campos_deseados.append('SUP_FMT')
     campos_validos = [c for c in campos_deseados if c in df_mapa.columns]
     
-    # Renderizar capas activas con su color del catálogo
+    # --- RECUPERANDO TUS ALIAS Y ESTILOS ---
+    diccionario_alias = {
+        'SOLICITANT': 'BENEFICIARIO: ', 'FOL_PROG': 'FOLIO: ', 'ESTADO': 'ESTADO: ', 
+        'MUNICIPIO': 'MUNICIPIO: ', 'TIPO_PROP': 'TIPO DE PROPIEDAD: ', 
+        'MONTO_FMT': 'INVERSIÓN ($): ', 'CONCEPTO': 'CONCEPTO: ', 'SUP_FMT': 'SUPERFICIE (Ha): '
+    }
+    lista_alias = [diccionario_alias.get(c, c) for c in campos_validos]
+    # ---------------------------------------
+
+    # Renderizar capas activas con su color del catálogo y TOOLTIP CORREGIDO
     for codigo in capas_activas:
         subset = df_mapa[df_mapa['TIPO_CAPA'] == codigo]
         if not subset.empty:
@@ -426,7 +434,11 @@ with col_centro:
             folium.GeoJson(
                 subset, name=CATALOGO_CAPAS[codigo]['nombre'], smooth_factor=2.0,
                 style_function=lambda x, c=color_capa: {'fillColor': c, 'color': 'black', 'weight': 0.4, 'fillOpacity': 0.7},
-                tooltip=folium.GeoJsonTooltip(fields=campos_validos)
+                tooltip=folium.GeoJsonTooltip(
+                    fields=campos_validos,
+                    aliases=lista_alias, # <--- AQUÍ ESTÁ EL CAMBIO
+                    style=("background-color: white; color: #333333; font-family: arial; font-size: 10px; padding: 8px;") # <--- Y AQUÍ EL CSS
+                )
             ).add_to(m)
 
     # Macro Leyenda Dinámica
