@@ -233,25 +233,22 @@ else:
     """
 st.markdown(html_header, unsafe_allow_html=True)
 
-# --- 4. DATOS (MODIFICADO Y CORREGIDO) ---
-@st.cache_data(ttl=600) 
+# --- 4. DATOS (CACHÉ AJUSTADO A 60 SEGUNDOS) ---
+@st.cache_data(ttl=60) 
 def cargar_datos():
     carpeta_datos = 'datos_web'
     ruta_cuenca = os.path.join(carpeta_datos, 'cuenca_web.parquet')
     
-    # 1. Intentar cargar capas individuales (NUEVO SISTEMA ADMIN)
+    # 1. Intentar cargar capas individuales
     capas_admin = ["PSA", "PFC", "MFC"]
     gdfs_lista = []
     
-    # Intentamos cargar capas individuales si existen
     for capa in capas_admin:
         ruta = os.path.join(carpeta_datos, f"capa_{capa}_procesada.parquet")
         if os.path.exists(ruta):
             try:
                 g = gpd.read_parquet(ruta)
-                # Asegurar CRS correcto
                 if g.crs and g.crs.to_string() != "EPSG:4326": g = g.to_crs("EPSG:4326")
-                # Asegurar etiqueta
                 if 'TIPO_CAPA' not in g.columns: g['TIPO_CAPA'] = capa
                 gdfs_lista.append(g)
             except: pass
@@ -260,36 +257,38 @@ def cargar_datos():
     if gdfs_lista:
         gdf = pd.concat(gdfs_lista, ignore_index=True)
     else:
-        # 3. FALLBACK: Si no hay capas nuevas, usar el master antiguo
+        # 3. FALLBACK: Usar el master antiguo
         ruta_master = os.path.join(carpeta_datos, 'db_master.parquet')
-        if os.path.exists(ruta_master):
-            gdf = gpd.read_parquet(ruta_master)
-        else:
-            return None, None # No hay datos
+        gdf = gpd.read_parquet(ruta_master) if os.path.exists(ruta_master) else None
 
-    # Limpieza final para evitar errores en gráficas
-    for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT']:
-        if c in gdf.columns: gdf[c] = gdf[c].astype(str)
-    
-    # Asegurar que existan las columnas de dinero (rellenar con 0 si faltan)
-    for col_dinero in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
-        if col_dinero not in gdf.columns: 
-            gdf[col_dinero] = 0.0
-        else:
-            gdf[col_dinero] = pd.to_numeric(gdf[col_dinero], errors='coerce').fillna(0)
+    if gdf is not None:
+        # Limpieza de columnas clave
+        for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT']:
+            if c in gdf.columns: gdf[c] = gdf[c].astype(str)
+        
+        # Asegurar columnas de dinero
+        for col_dinero in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
+            if col_dinero not in gdf.columns: 
+                gdf[col_dinero] = 0.0
+            else:
+                gdf[col_dinero] = pd.to_numeric(gdf[col_dinero], errors='coerce').fillna(0)
 
     # Cargar Cuenca
     cuenca = gpd.read_parquet(ruta_cuenca) if os.path.exists(ruta_cuenca) else None
     
     return gdf, cuenca
 
-# --- EJECUCIÓN DE CARGA (AQUÍ ESTABA EL ERROR ANTES) ---
+# --- EJECUCIÓN DE CARGA Y HORA ---
 df_total, cuenca = cargar_datos()
 
-# --- NUEVO: Guardar hora de actualización ---
 if 'ultima_actualizacion' not in st.session_state:
-    from datetime import datetime
     st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
+
+if df_total is None:
+    st.info("👋 ¡Hola! El sistema está listo pero no hay datos cargados.")
+    st.warning("Ve al menú de la izquierda > 'admin' para subir tu primera capa.")
+    st.stop()
+
 # --- 5. LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
@@ -298,54 +297,52 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 # =========================================================
 with col_izq:
     st.markdown('<div class="section-header">🎛️ FILTROS</div>', unsafe_allow_html=True)
-    ver_psa = st.checkbox("🟩 PSA", value=True)
-    ver_pfc = st.checkbox("🟨 PFC", value=True)
-    ver_mfc = st.checkbox("🟦 MFC", value=True)
     
-    # BOTÓN ACTUALIZAR
+    ver_psa = st.checkbox("🟩 Servicios Ambientales", value=True, key="chk_psa")
+    ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
+    ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
+    
+    # === BOTÓN ACTUALIZAR DATOS ===
     st.markdown("---")
     if st.button("🔄 ACTUALIZAR DATOS", use_container_width=True):
         st.cache_data.clear()
         st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
-        st.toast("Sincronizando con GitHub...", icon="📥")
+        st.toast("Sincronizando con la base de datos...", icon="📥")
         st.rerun()
     
     st.markdown(f"""<p style='text-align:center; font-size:0.7rem; color:gray;'>
         Datos leídos a las: {st.session_state.ultima_actualizacion}</p>""", unsafe_allow_html=True)
+    # ==============================
 
-# --- LÓGICA DE FILTRADO ---
 capas = []
 if ver_psa: capas.append("PSA")
 if ver_pfc: capas.append("PFC")
 if ver_mfc: capas.append("MFC")
 
-df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas)]
+# FILTRO PRINCIPAL
+df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas)].copy()
 
-# Cálculos Totales
+# ------------------------------------------------------------------
+# 🛠️ CORRECCIÓN DE CONTEO Y LIMPIEZA DE FOLIOS (EL FIX)
+# ------------------------------------------------------------------
+# 1. Estandarizar columna folio
+df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
+
+# 2. Definir basura
+valores_invalidos = ['nan', 'None', '', 'Sin Dato', 'NAN', 'null']
+
+# 3. Calcular Métricas
 monto_cnf = df_filtrado['MONTO_CNF'].sum()
 monto_pi = df_filtrado['MONTO_PI'].sum()
 monto_tot = df_filtrado['MONTO_TOT'].sum()
 col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'SUP_HA', 'HECTAREAS', 'HA']), None)
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
 
-# Filtramos folios que no sean nulos, ni vacíos, ni "Sin Dato" antes de contar
-folios_validos = df_filtrado[
-    (df_filtrado['FOL_PROG'].notna()) & 
-    (df_filtrado['FOL_PROG'] != "") & 
-    (df_filtrado['FOL_PROG'] != "Sin Dato")
-]['FOL_PROG']
-
-# 1. Convertimos a texto y limpiamos espacios invisibles
-df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
-
-# 2. Definimos qué valores NO son un proyecto (basura o vacíos)
-valores_invalidos = ['nan', 'None', '', 'Sin Dato', 'nan', 'NAN', 'null']
-
-# 3. Contamos solo los que sean folios reales
+# 4. CONTEO EXACTO (Ignorando basura y duplicados)
 num_proy = df_filtrado[~df_filtrado['FOL_PROG'].isin(valores_invalidos)]['FOL_PROG'].nunique()
+# ------------------------------------------------------------------
 
-
-# SECCIÓN DESCARGAS
+# SECCIÓN DESCARGAS (IZQUIERDA)
 with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
@@ -544,10 +541,6 @@ with col_der:
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
     """, unsafe_allow_html=True)
-
-    # Esto mostrará los 232 valores en una lista pequeña para que encuentres el error
-    st.write("Depuración de folios:", df_filtrado['FOL_PROG'].unique())
-    
     
     if not df_filtrado.empty:
         # --- PIE CHART TENENCIA ---
