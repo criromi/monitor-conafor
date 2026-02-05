@@ -21,7 +21,7 @@ except ImportError:
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
 
-# 🎨 COLORES INSTITUCIONALES (PARA GRÁFICAS Y TEXTOS)
+# 🎨 COLORES INSTITUCIONALES
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
@@ -29,26 +29,27 @@ COLOR_ACENTO = "#DDC9A3"        # Dorado
 # ==============================================================================
 # 📋 CATALOGO MAESTRO INTELIGENTE
 # ==============================================================================
-# 'color_mapa': Brillante para el mapa.
-# 'color_chart': Serio/Institucional para las gráficas.
 CATALOGO_CAPAS = {
     "PSA": {
         "nombre": "Servicios Ambientales", 
-        "color_mapa": "#28a745",       # Verde brillante (Mapa)
-        "color_chart": COLOR_PRIMARIO  # Verde Oscuro (Gráfica)
+        "color_mapa": "#28a745",       
+        "color_chart": COLOR_PRIMARIO  
     },
     "PFC": {
         "nombre": "Plantaciones Forestales", 
-        "color_mapa": "#ffc107",       # Amarillo (Mapa)
-        "color_chart": COLOR_SECUNDARIO # Guinda (Gráfica)
+        "color_mapa": "#ffc107",       
+        "color_chart": COLOR_SECUNDARIO 
     },
     "MFC": {
         "nombre": "Manejo Forestal", 
-        "color_mapa": "#17a2b8",       # Azul (Mapa)
-        "color_chart": COLOR_ACENTO    # Dorado (Gráfica)
+        "color_mapa": "#17a2b8",       
+        "color_chart": COLOR_ACENTO    
     },
-    # AGREGA AQUÍ TUS NUEVAS DEPENDENCIAS SI ES NECESARIO:
-    "CUSTF": {"nombre": "Compensación Ambiental", "color_mapa": "#a8a618", "color_chart": "#3a0b1e"}
+    "CUST": { # Ejemplo que tenías en la imagen
+        "nombre": "Compensación Ambiental", 
+        "color_mapa": "#ca520c", 
+        "color_chart": "#6f42c1"
+    }
 }
 
 # ==============================================================================
@@ -103,7 +104,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR (CON CORRECCIÓN UTF-8)
+# 🛠️ MODO ADMINISTRADOR
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -139,21 +140,17 @@ if modo_edicion_activo:
                     try:
                         import backend_admin
                         df_ex = None
-                        
-                        # --- CORRECCIÓN UTF-8 / LATIN-1 ---
                         if up_csv:
+                            # Corrección UTF-8 / Latin-1
                             if up_csv.name.endswith('.csv'):
                                 try:
-                                    # Intentar moderno
                                     df_ex = pd.read_csv(up_csv, encoding='utf-8')
                                 except UnicodeDecodeError:
-                                    # Si falla, intentar Excel antiguo (Español)
                                     up_csv.seek(0)
                                     df_ex = pd.read_csv(up_csv, encoding='latin-1')
                             else:
                                 df_ex = pd.read_excel(up_csv)
-                        # -----------------------------------
-
+                                
                         gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
                         if gdf_res is not None:
                             os.makedirs("datos_web", exist_ok=True)
@@ -162,11 +159,10 @@ if modo_edicion_activo:
                             st.success(f"✅ ¡{capa_sel} actualizada!")
                         else: st.error(msg)
                     except Exception as e: st.error(f"Error: {e}")
-            else: st.warning("Falta el ZIP.")
     st.stop()
 
 # ==============================================================================
-# 🚀 DASHBOARD (DISEÑO RESTAURADO)
+# 🚀 DASHBOARD
 # ==============================================================================
 
 def get_img_as_base64_app(file_path):
@@ -184,13 +180,11 @@ for ext in [".png", ".jpg", ".jpeg"]:
         ext_enc = "png" if ext == ".png" else "jpeg"
         break
 
-# --- CSS ORIGINAL RESTAURADO ---
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* PANELES */
     div[data-testid="column"]:nth-of-type(1) > div {{
         background-color: white; border-radius: 12px; padding: 20px;
         border: 1px solid #e0e0e0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); height: 100%;
@@ -200,19 +194,13 @@ st.markdown(f"""
         background-color: white; border-radius: 12px; padding: 15px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
-
-    /* CHECKBOXES (DISEÑO ORIGINAL) */
     div[data-testid="stCheckbox"] label p {{
         font-weight: 700 !important; font-size: 1rem !important; color: #333 !important;
     }}
-    
-    /* TITULOS */
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1.1rem;
     }}
-
-    /* METRICAS (DISEÑO ORIGINAL RESTAURADO) */
     .metric-container {{
         background-color: #F8F9FA; border-radius: 8px; padding: 12px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
@@ -220,7 +208,6 @@ st.markdown(f"""
     .metric-label {{ font-size: 0.85rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
     .metric-value {{ font-size: 1.3rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 5px 0; }}
     .metric-value-total {{ font-size: 1.6rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 5px 0; }}
-    
     .chart-title {{
         font-size: 0.9rem; font-weight: bold; color: {COLOR_PRIMARIO};
         text-align: center; margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px;
@@ -229,7 +216,6 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
 if logo_b64:
     st.markdown(f"""
     <div style="border-bottom: 4px solid {COLOR_ACENTO}; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -245,7 +231,6 @@ if logo_b64:
     </div>
     """, unsafe_allow_html=True)
 
-# --- CARGA DATOS ---
 @st.cache_data(ttl=60) 
 def cargar_datos():
     carpeta_datos = 'datos_web'
@@ -287,7 +272,7 @@ if df_total is None:
 # --- LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
-# 1. FILTROS (IZQUIERDA)
+# 1. FILTROS
 with col_izq:
     st.markdown('<div class="section-header">🎛️ CAPAS DISPONIBLES</div>', unsafe_allow_html=True)
     capas_activas = []
@@ -318,7 +303,6 @@ with col_izq:
         buff = BytesIO()
         with pd.ExcelWriter(buff, engine='xlsxwriter') as w: df_ex.to_excel(w, index=False)
         st.download_button("📊 Descargar Tabla (Excel)", buff.getvalue(), "Datos_CONAFOR.xlsx", "application/vnd.ms-excel", use_container_width=True)
-        
         try:
             with tempfile.TemporaryDirectory() as td:
                 df_filtrado.to_file(os.path.join(td, "Proy.shp"))
@@ -328,17 +312,33 @@ with col_izq:
                 st.download_button("🌍 Descargar Capa (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
         except: pass
 
-# 2. MAPA (CENTRO)
+# 2. MAPA (CENTRO) - CORREGIDO PARA CENTRAR CUENCA
 with col_centro:
+    # Lógica de centrado mejorada: Prioridad a la Cuenca
     try:
-        b = df_filtrado.total_bounds
-        clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
+        if cuenca is not None:
+            # Si hay cuenca, usamos sus límites
+            b = cuenca.total_bounds
+            clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
+        elif not df_filtrado.empty:
+            # Si no hay cuenca pero hay puntos, usamos los puntos
+            b = df_filtrado.total_bounds
+            clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
+        else:
+            clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
     
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
     folium.TileLayer("CartoDB positron", control=False).add_to(m)
+    
+    # Agregar Cuenca
     if cuenca is not None:
         folium.GeoJson(cuenca, style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
+        # Forzar ajuste a la cuenca si existe
+        try:
+            bounds = cuenca.total_bounds
+            m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+        except: pass
 
     df_mapa = df_filtrado.copy()
     if 'MONTO_TOT' in df_mapa.columns: df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
@@ -350,7 +350,6 @@ with col_centro:
     for cod in capas_activas:
         sub = df_mapa[df_mapa['TIPO_CAPA'] == cod]
         if not sub.empty:
-            # COLOR DEL MAPA (Brillante)
             c_mapa = CATALOGO_CAPAS.get(cod, {}).get("color_mapa", "blue")
             folium.GeoJson(
                 sub, name=CATALOGO_CAPAS[cod]['nombre'], smooth_factor=2.0,
@@ -358,7 +357,6 @@ with col_centro:
                 tooltip=folium.GeoJsonTooltip(fields=campos, aliases=alias, style="background-color: white; color: #333; font-family: arial; font-size: 10px; padding: 8px;")
             ).add_to(m)
 
-    # Leyenda
     ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
     macro = MacroElement()
     macro._template = Template(f"""
@@ -370,14 +368,17 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=600, returned_objects=[])
     
-    # Gráficas inferiores
+    # Gráficas inferiores (CORREGIDAS ETIQUETAS)
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         if 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
+            # FIX: labels
+            f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
+                       color_discrete_sequence=[COLOR_PRIMARIO],
+                       labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
             f.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
             st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
     with c2:
@@ -385,11 +386,14 @@ with col_centro:
             st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             d['C'] = d['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
-            f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', color_discrete_sequence=[COLOR_SECUNDARIO])
+            # FIX: labels
+            f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
+                       color_discrete_sequence=[COLOR_SECUNDARIO],
+                       labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
             f.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
             st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
-# 3. ESTADISTICAS (DERECHA - DISEÑO ORIGINAL)
+# 3. ESTADISTICAS
 with col_der:
     st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
     st.markdown(f"""
@@ -419,18 +423,23 @@ with col_der:
     if not df_filtrado.empty:
         st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-        
-        # MAPEO DE COLORES INSTITUCIONALES PARA LA GRÁFICA
         color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
         
-        f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', color_discrete_map=color_map_chart, text_auto='.2s')
+        # FIX: labels
+        f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', 
+                   color_discrete_map=color_map_chart, text_auto='.2s',
+                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'DEPENDENCIA'})
+        
         f.update_layout(height=250, showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
         if 'TIPO_PROP' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-            f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO])
+            # FIX: labels
+            f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
+                       color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
+                       labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
             f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), legend=dict(orientation="h"))
             st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
