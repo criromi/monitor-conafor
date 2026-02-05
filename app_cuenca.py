@@ -465,20 +465,30 @@ with col_der:
     
     if not df_filtrado.empty:
         st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
+        
+        # 1. Preparamos los datos
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-        color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
         
-        # --- CORRECCIÓN AQUÍ ---
-        # 1. Quitamos 'TIPO_CAPA' de 'labels' para evitar el conflicto
+        # 2. Creamos la gráfica BASICA (Sin configurar colores aquí para evitar el error)
         f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', 
-                   color='TIPO_CAPA', 
-                   color_discrete_map=color_map_chart, 
                    text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL'}) # Solo renombramos el monto aquí
+                   labels={'MONTO_TOT': 'MONTO TOTAL'})
         
-        # 2. Asignamos el nombre del eje X manualmente en el layout
+        # 3. SOLUCIÓN BLINDADA: Asignamos los colores manualmente
+        # Creamos una lista de colores en el mismo orden que las barras
+        lista_colores = []
+        for categoria in d['TIPO_CAPA']:
+            # Busca el color en tu catálogo. Si no lo encuentra (por error de dedo), pone Gris.
+            datos_capa = CATALOGO_CAPAS.get(categoria, {})
+            color = datos_capa.get('color_chart', '#808080') 
+            lista_colores.append(color)
+            
+        # Aplicamos los colores directamente a las barras
+        f.update_traces(marker_color=lista_colores)
+        
+        # 4. Ajustes finales de diseño
         f.update_layout(
-            xaxis_title="DEPENDENCIA",  # <--- Aquí definimos el nombre seguro
+            xaxis_title="DEPENDENCIA",
             yaxis_title="MONTO TOTAL",
             height=250, 
             showlegend=False, 
@@ -486,7 +496,6 @@ with col_der:
             plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(t=10,b=10)
         )
-        # -----------------------
         
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
