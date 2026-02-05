@@ -5,6 +5,7 @@ import folium
 from streamlit_folium import st_folium
 import os
 import plotly.express as px
+import plotly.graph_objects as go # <--- NUEVO IMPORT NECESARIO PARA EL FIX
 from branca.element import MacroElement, Template
 import base64
 from io import BytesIO
@@ -48,7 +49,7 @@ CATALOGO_CAPAS = {
     "CUSTF": { 
         "nombre": "Compensación Ambiental", 
         "color_mapa": "#ca520c",       
-        "color_chart": "#6E1616D8"       
+        "color_chart": "#6f42c1"       
     }
 }
 
@@ -290,7 +291,7 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
 # 1. FILTROS Y BUSQUEDA (IZQUIERDA)
 with col_izq:
-    # --- NUEVO: BUSCADOR INTELIGENTE ---
+    # --- BUSCADOR INTELIGENTE ---
     st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
     busqueda = st.text_input("Buscar Beneficiario o Folio:", placeholder="Escribe aquí...", help="Filtra el mapa y las gráficas por texto")
     
@@ -303,13 +304,11 @@ with col_izq:
             if st.checkbox(info['nombre'], value=True, key=f"chk_{codigo}"):
                 capas_activas.append(codigo)
 
-# --- LOGICA DE FILTRADO (AHORA CON BUSQUEDA) ---
+# --- LOGICA DE FILTRADO ---
 df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
 
-# APLICAR BUSQUEDA DE TEXTO
 if busqueda:
     busqueda = busqueda.upper()
-    # Filtramos si la busqueda está en SOLICITANT o en FOL_PROG
     mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(busqueda, na=False)) | \
            (df_filtrado['FOL_PROG'].str.upper().str.contains(busqueda, na=False))
     df_filtrado = df_filtrado[mask]
@@ -343,10 +342,10 @@ with col_izq:
                 st.download_button("🌍 Descargar Capa (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
         except: pass
 
-# 2. MAPA (CENTRO) - AHORA CON SATELITE
+# 2. MAPA (CENTRO)
 with col_centro:
     try:
-        if cuenca is not None and not busqueda: # Si hay búsqueda, mejor centrar en los resultados
+        if cuenca is not None and not busqueda:
             b = cuenca.total_bounds
             clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
         elif not df_filtrado.empty:
@@ -358,26 +357,12 @@ with col_centro:
     
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
     
-    # --- CAPAS BASE (SATELITE VS MAPA CLARO) ---
-    folium.TileLayer(
-        tiles="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-        attr="Google",
-        name="Google Satélite",
-        overlay=False,
-        control=True
-    ).add_to(m)
-    
-    folium.TileLayer(
-        "CartoDB positron",
-        name="Mapa Claro (Base)",
-        overlay=False,
-        control=True
-    ).add_to(m)
-    # -------------------------------------------
+    folium.TileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", attr="Google", name="Google Satélite", overlay=False, control=True).add_to(m)
+    folium.TileLayer("CartoDB positron", name="Mapa Claro", overlay=False, control=True).add_to(m)
     
     if cuenca is not None:
-        folium.GeoJson(cuenca, name="Límite Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        if not busqueda: # Solo ajustamos a la cuenca si NO estamos buscando algo especifico
+        folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
+        if not busqueda:
              try:
                 bounds = cuenca.total_bounds
                 m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
@@ -400,7 +385,7 @@ with col_centro:
                 tooltip=folium.GeoJsonTooltip(fields=campos, aliases=alias, style="background-color: white; color: #333; font-family: arial; font-size: 10px; padding: 8px;")
             ).add_to(m)
 
-    folium.LayerControl(position='topright', collapsed=True).add_to(m) # BOTON DE CAPAS
+    folium.LayerControl(position='topright', collapsed=True).add_to(m)
 
     ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
     macro = MacroElement()
@@ -413,7 +398,6 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=600, returned_objects=[])
     
-    # Gráficas inferiores
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
@@ -466,32 +450,42 @@ with col_der:
     if not df_filtrado.empty:
         st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
         
-        # 1. Preparar datos
+        # --- SOLUCIÓN BLINDADA (Graph Objects) ---
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         
-        # 2. Extraer el diccionario de colores
-        color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
+        # Generar lista de colores manualmente
+        colores_barras = [CATALOGO_CAPAS.get(c, {}).get('color_chart', '#808080') for c in d['TIPO_CAPA']]
         
-        # 3. Crear Gráfica (MÉTODO SEGURO)
-        # Nota: NO renombramos 'TIPO_CAPA' aquí adentro para evitar el error.
-        f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', 
-                   color='TIPO_CAPA',  # Usamos la columna para colorear
-                   color_discrete_map=color_map_chart, # Aplicamos tus colores institucionales
-                   text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL'}) # Solo renombramos el monto aquí
+        # Usamos go.Figure en lugar de px.bar para evitar validaciones fallidas
+        fig_go = go.Figure(data=[go.Bar(
+            x=d['TIPO_CAPA'],
+            y=d['MONTO_TOT'],
+            text=d['MONTO_TOT'],
+            texttemplate='%{text:.2s}',
+            textposition='auto',
+            marker_color=colores_barras # Asignación directa sin mapeos
+        )])
         
-        # 4. Ajustes de Diseño y Renombrado de Eje X (Aquí es seguro hacerlo)
-        f.update_layout(
-            xaxis_title="DEPENDENCIA",  # <--- Aquí cambiamos el nombre sin romper nada
+        fig_go.update_layout(
+            xaxis_title="DEPENDENCIA",
             yaxis_title="MONTO TOTAL",
-            height=250, 
-            showlegend=False, # Ocultamos la leyenda porque las barras ya tienen nombre abajo
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            margin=dict(t=10,b=10)
+            height=250,
+            margin=dict(t=10, b=10),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=False
         )
-        
-        st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
-        
+        st.plotly_chart(fig_go, use_container_width=True, config={'displayModeBar': False})
+        # ------------------------------------------
+
+        if 'TIPO_PROP' in df_filtrado.columns:
+            st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
+            d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
+            f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
+                       color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
+                       labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
+            f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), legend=dict(orientation="h"))
+            st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
+
 with st.expander("📋 Ver Base de Datos Completa"):
     st.dataframe(df_filtrado.drop(columns='geometry', errors='ignore'), use_container_width=True)
