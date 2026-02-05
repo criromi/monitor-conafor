@@ -45,11 +45,10 @@ CATALOGO_CAPAS = {
         "color_mapa": "#17a2b8",       
         "color_chart": COLOR_ACENTO    
     },
-    # AGREGADA TU NUEVA CAPA CON LA CLAVE QUE USASTE 'CUSTF'
     "CUSTF": { 
         "nombre": "Compensación Ambiental", 
-        "color_mapa": "#ca520c",       # Naranja ladrillo para el mapa
-        "color_chart": "#6e170b"       # Morado para la gráfica (o usa un institucional si prefieres)
+        "color_mapa": "#ca520c",       
+        "color_chart": "#6E1616D8"       
     }
 }
 
@@ -105,7 +104,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR (CON BOTÓN DE DESCARGA PARQUET)
+# 🛠️ MODO ADMINISTRADOR
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -144,7 +143,6 @@ if modo_edicion_activo:
                         import backend_admin
                         df_ex = None
                         if up_csv:
-                            # Corrección UTF-8 / Latin-1
                             if up_csv.name.endswith('.csv'):
                                 try:
                                     df_ex = pd.read_csv(up_csv, encoding='utf-8')
@@ -157,7 +155,6 @@ if modo_edicion_activo:
                         gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
                         
                         if gdf_res is not None:
-                            # 1. Guardar temporalmente para ver cambios YA
                             os.makedirs("datos_web", exist_ok=True)
                             nombre_archivo = f"capa_{capa_sel}_procesada.parquet"
                             ruta_salida = os.path.join("datos_web", nombre_archivo)
@@ -166,17 +163,15 @@ if modo_edicion_activo:
                             st.cache_data.clear()
                             st.success(f"✅ ¡Capa {capa_sel} procesada!")
                             
-                            # 2. GENERAR BOTÓN DE DESCARGA (ESTO ES LO QUE NECESITAS)
                             with open(ruta_salida, "rb") as f:
                                 st.download_button(
-                                    label=f"💾 DESCARGAR {nombre_archivo} (Para subir a GitHub)",
+                                    label=f"💾 DESCARGAR {nombre_archivo}",
                                     data=f,
                                     file_name=nombre_archivo,
                                     mime="application/octet-stream",
                                     type="secondary"
                                 )
-                            st.info(f"👆 **Paso Final:** Descarga este archivo y súbelo a la carpeta 'datos_web' en tu GitHub para que el cambio sea permanente.")
-                            
+                            st.info(f"👆 Descarga este archivo y súbelo a GitHub.")
                         else: st.error(msg)
                     except Exception as e: st.error(f"Error: {e}")
             else: st.warning("Sube el archivo ZIP.")
@@ -216,7 +211,7 @@ st.markdown(f"""
         box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     div[data-testid="stCheckbox"] label p {{
-        font-weight: 700 !important; font-size: 1rem !important; color: #333 !important;
+        font-weight: 700 !important; font-size: 0.95rem !important; color: #333 !important;
     }}
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
@@ -293,17 +288,32 @@ if df_total is None:
 # --- LAYOUT ---
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
-# 1. FILTROS
+# 1. FILTROS Y BUSQUEDA (IZQUIERDA)
 with col_izq:
+    # --- NUEVO: BUSCADOR INTELIGENTE ---
+    st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
+    busqueda = st.text_input("Buscar Beneficiario o Folio:", placeholder="Escribe aquí...", help="Filtra el mapa y las gráficas por texto")
+    
+    st.markdown('<div style="margin-top:15px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">🎛️ CAPAS DISPONIBLES</div>', unsafe_allow_html=True)
+    
     capas_activas = []
     for codigo, info in CATALOGO_CAPAS.items():
         if not df_total[df_total['TIPO_CAPA'] == codigo].empty:
             if st.checkbox(info['nombre'], value=True, key=f"chk_{codigo}"):
                 capas_activas.append(codigo)
 
-# Lógica
+# --- LOGICA DE FILTRADO (AHORA CON BUSQUEDA) ---
 df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
+
+# APLICAR BUSQUEDA DE TEXTO
+if busqueda:
+    busqueda = busqueda.upper()
+    # Filtramos si la busqueda está en SOLICITANT o en FOL_PROG
+    mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(busqueda, na=False)) | \
+           (df_filtrado['FOL_PROG'].str.upper().str.contains(busqueda, na=False))
+    df_filtrado = df_filtrado[mask]
+
 df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
 valores_invalidos = ['nan', 'None', '', 'Sin Dato', 'NAN', 'null']
 
@@ -333,16 +343,13 @@ with col_izq:
                 st.download_button("🌍 Descargar Capa (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
         except: pass
 
-# 2. MAPA (CENTRO) - CORREGIDO
+# 2. MAPA (CENTRO) - AHORA CON SATELITE
 with col_centro:
-    # Lógica de centrado mejorada: Prioridad a la Cuenca
     try:
-        if cuenca is not None:
-            # Si hay cuenca, usamos sus límites
+        if cuenca is not None and not busqueda: # Si hay búsqueda, mejor centrar en los resultados
             b = cuenca.total_bounds
             clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
         elif not df_filtrado.empty:
-            # Si no hay cuenca pero hay puntos, usamos los puntos
             b = df_filtrado.total_bounds
             clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
         else:
@@ -350,16 +357,31 @@ with col_centro:
     except: clat, clon, zoom = 20.5, -101.5, 7
     
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
-    folium.TileLayer("CartoDB positron", control=False).add_to(m)
     
-    # Agregar Cuenca
+    # --- CAPAS BASE (SATELITE VS MAPA CLARO) ---
+    folium.TileLayer(
+        tiles="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        attr="Google",
+        name="Google Satélite",
+        overlay=False,
+        control=True
+    ).add_to(m)
+    
+    folium.TileLayer(
+        "CartoDB positron",
+        name="Mapa Claro (Base)",
+        overlay=False,
+        control=True
+    ).add_to(m)
+    # -------------------------------------------
+    
     if cuenca is not None:
-        folium.GeoJson(cuenca, style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        # Forzar ajuste a la cuenca si existe
-        try:
-            bounds = cuenca.total_bounds
-            m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
-        except: pass
+        folium.GeoJson(cuenca, name="Límite Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
+        if not busqueda: # Solo ajustamos a la cuenca si NO estamos buscando algo especifico
+             try:
+                bounds = cuenca.total_bounds
+                m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+             except: pass
 
     df_mapa = df_filtrado.copy()
     if 'MONTO_TOT' in df_mapa.columns: df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
@@ -378,6 +400,8 @@ with col_centro:
                 tooltip=folium.GeoJsonTooltip(fields=campos, aliases=alias, style="background-color: white; color: #333; font-family: arial; font-size: 10px; padding: 8px;")
             ).add_to(m)
 
+    folium.LayerControl(position='topright', collapsed=True).add_to(m) # BOTON DE CAPAS
+
     ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
     macro = MacroElement()
     macro._template = Template(f"""
@@ -389,7 +413,7 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=600, returned_objects=[])
     
-    # Gráficas inferiores (CORREGIDAS ETIQUETAS)
+    # Gráficas inferiores
     st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
