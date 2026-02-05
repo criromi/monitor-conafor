@@ -466,38 +466,32 @@ with col_der:
     if not df_filtrado.empty:
         st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
         
-        # 1. Preparamos los datos
+        # 1. Preparar datos
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         
-        # 2. Creamos la gráfica BASICA (Sin configurar colores aquí para evitar el error)
+        # 2. Extraer el diccionario de colores
+        color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
+        
+        # 3. Crear Gráfica (MÉTODO SEGURO)
+        # Nota: NO renombramos 'TIPO_CAPA' aquí adentro para evitar el error.
         f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', 
+                   color='TIPO_CAPA',  # Usamos la columna para colorear
+                   color_discrete_map=color_map_chart, # Aplicamos tus colores institucionales
                    text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL'})
+                   labels={'MONTO_TOT': 'MONTO TOTAL'}) # Solo renombramos el monto aquí
         
-        # 3. SOLUCIÓN BLINDADA: Asignamos los colores manualmente
-        # Creamos una lista de colores en el mismo orden que las barras
-        lista_colores = []
-        for categoria in d['TIPO_CAPA']:
-            # Busca el color en tu catálogo. Si no lo encuentra (por error de dedo), pone Gris.
-            datos_capa = CATALOGO_CAPAS.get(categoria, {})
-            color = datos_capa.get('color_chart', '#808080') 
-            lista_colores.append(color)
-            
-        # Aplicamos los colores directamente a las barras
-        f.update_traces(marker_color=lista_colores)
-        
-        # 4. Ajustes finales de diseño
+        # 4. Ajustes de Diseño y Renombrado de Eje X (Aquí es seguro hacerlo)
         f.update_layout(
-            xaxis_title="DEPENDENCIA",
+            xaxis_title="DEPENDENCIA",  # <--- Aquí cambiamos el nombre sin romper nada
             yaxis_title="MONTO TOTAL",
             height=250, 
-            showlegend=False, 
+            showlegend=False, # Ocultamos la leyenda porque las barras ya tienen nombre abajo
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(t=10,b=10)
         )
         
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
-
+        
 with st.expander("📋 Ver Base de Datos Completa"):
     st.dataframe(df_filtrado.drop(columns='geometry', errors='ignore'), use_container_width=True)
