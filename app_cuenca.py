@@ -16,7 +16,7 @@ from datetime import datetime
 try:
     import backend_admin
 except ImportError:
-    pass # Si falla, solo no funcionará la subida, pero el dashboard sí.
+    pass 
 
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
@@ -107,9 +107,18 @@ modo_edicion_activo = False
 if st.session_state.rol == "admin":
     with st.sidebar:
         st.header("🔧 Panel Administrador")
-        st.info("Sesión iniciada como Admin")
+        st.success("Sesión: Administrador")
+        
         seleccion = st.radio("Acciones:", ["👁️ Ver Monitor", "📤 Subir/Actualizar Capas"])
         
+        # --- AQUÍ ESTÁ TU BOTÓN DE ACTUALIZAR (SOLO PARA ADMIN) ---
+        st.markdown("---")
+        st.write("Gestion de Memoria:")
+        if st.button("🔄 Forzar Recarga de Datos"):
+            st.cache_data.clear()
+            st.rerun()
+        # -----------------------------------------------------------
+
         if seleccion == "📤 Subir/Actualizar Capas":
             modo_edicion_activo = True
             
@@ -134,6 +143,7 @@ if modo_edicion_activo:
     with col_up2:
         st.subheader("2. Procesamiento")
         st.info(f"Vas a actualizar la capa: **{capa_seleccionada}**")
+        
         if st.button("🚀 PROCESAR Y GUARDAR", type="primary"):
             if uploaded_zip:
                 with st.spinner("Procesando archivos..."):
@@ -156,9 +166,13 @@ if modo_edicion_activo:
                             os.makedirs("datos_web", exist_ok=True)
                             gdf_result.to_parquet(ruta_out)
                             
+                            # --- AQUÍ OCURRE LA MAGIA AUTOMÁTICA ---
+                            st.cache_data.clear() # Limpia la memoria automáticamente al guardar
+                            # ---------------------------------------
+                            
                             st.success(f"✅ ¡Capa {capa_seleccionada} actualizada con éxito!")
                             st.balloons()
-                            st.cache_data.clear() # Limpiar caché para ver cambios
+                            
                         else:
                             st.error(f"Error en backend: {msg}")
                     except Exception as e:
@@ -302,7 +316,7 @@ def cargar_datos():
 
 df_total, cuenca = cargar_datos()
 
-# Inicializar hora de actualización
+# Inicializar hora de actualización (opcional, solo para control interno)
 if 'ultima_actualizacion' not in st.session_state:
     st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
 
@@ -322,16 +336,7 @@ with col_izq:
     ver_pfc = st.checkbox("🟨 Plantaciones Forestales", value=True, key="chk_pfc")
     ver_mfc = st.checkbox("🟦 Manejo Forestal", value=True, key="chk_mfc")
     
-    # --- BOTÓN DE ACTUALIZACIÓN ---
-    st.markdown("---")
-    if st.button("🔄 ACTUALIZAR DATOS", use_container_width=True):
-        st.cache_data.clear()
-        st.session_state.ultima_actualizacion = datetime.now().strftime("%H:%M:%S")
-        st.toast("Sincronizando con base de datos...", icon="📥")
-        st.rerun()
-    
-    st.markdown(f"""<p style='text-align:center; font-size:0.7rem; color:gray;'>
-        Leído a las: {st.session_state.ultima_actualizacion}</p>""", unsafe_allow_html=True)
+    # ❌ EL BOTÓN DE ACTUALIZAR HA SIDO ELIMINADO DE AQUÍ PARA EL USUARIO COMÚN ❌
 
 # Lógica de filtrado
 capas = []
