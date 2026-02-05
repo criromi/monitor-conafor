@@ -10,6 +10,7 @@ import base64
 from io import BytesIO
 import zipfile
 import tempfile
+from datetime import datetime 
 
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
