@@ -21,7 +21,7 @@ except ImportError:
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
 
-# 🎨 COLORES INSTITUCIONALES (ESTOS SON LOS QUE QUIERES EN LAS GRÁFICAS)
+# 🎨 COLORES INSTITUCIONALES (PARA GRÁFICAS Y TEXTOS)
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
@@ -29,9 +29,8 @@ COLOR_ACENTO = "#DDC9A3"        # Dorado
 # ==============================================================================
 # 📋 CATALOGO MAESTRO INTELIGENTE
 # ==============================================================================
-# Aquí definimos DOS colores: 
-# 1. 'color_mapa': Brillante para que se vea bien en el mapa.
-# 2. 'color_chart': Institucional para que las gráficas se vean formales.
+# 'color_mapa': Brillante para el mapa.
+# 'color_chart': Serio/Institucional para las gráficas.
 CATALOGO_CAPAS = {
     "PSA": {
         "nombre": "Servicios Ambientales", 
@@ -48,8 +47,8 @@ CATALOGO_CAPAS = {
         "color_mapa": "#17a2b8",       # Azul (Mapa)
         "color_chart": COLOR_ACENTO    # Dorado (Gráfica)
     },
-    # EJEMPLO PARA AGREGAR NUEVAS:
-    "CUST": {"nombre": "Compensación Ambiental", "color_mapa": "#ca520c", "color_chart": "#6f42c1"}
+    # AGREGA AQUÍ TUS NUEVAS DEPENDENCIAS SI ES NECESARIO:
+    # "SAN": {"nombre": "Sanidad", "color_mapa": "#d63384", "color_chart": "#6f42c1"}
 }
 
 # ==============================================================================
@@ -104,7 +103,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR
+# 🛠️ MODO ADMINISTRADOR (CON CORRECCIÓN UTF-8)
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -140,8 +139,21 @@ if modo_edicion_activo:
                     try:
                         import backend_admin
                         df_ex = None
+                        
+                        # --- CORRECCIÓN UTF-8 / LATIN-1 ---
                         if up_csv:
-                            df_ex = pd.read_csv(up_csv) if up_csv.name.endswith('.csv') else pd.read_excel(up_csv)
+                            if up_csv.name.endswith('.csv'):
+                                try:
+                                    # Intentar moderno
+                                    df_ex = pd.read_csv(up_csv, encoding='utf-8')
+                                except UnicodeDecodeError:
+                                    # Si falla, intentar Excel antiguo (Español)
+                                    up_csv.seek(0)
+                                    df_ex = pd.read_csv(up_csv, encoding='latin-1')
+                            else:
+                                df_ex = pd.read_excel(up_csv)
+                        # -----------------------------------
+
                         gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
                         if gdf_res is not None:
                             os.makedirs("datos_web", exist_ok=True)
@@ -150,6 +162,7 @@ if modo_edicion_activo:
                             st.success(f"✅ ¡{capa_sel} actualizada!")
                         else: st.error(msg)
                     except Exception as e: st.error(f"Error: {e}")
+            else: st.warning("Falta el ZIP.")
     st.stop()
 
 # ==============================================================================
@@ -280,7 +293,6 @@ with col_izq:
     capas_activas = []
     for codigo, info in CATALOGO_CAPAS.items():
         if not df_total[df_total['TIPO_CAPA'] == codigo].empty:
-            # Usamos st.write para controlar estilo si es necesario, pero checkbox estandar funciona bien con el CSS inyectado
             if st.checkbox(info['nombre'], value=True, key=f"chk_{codigo}"):
                 capas_activas.append(codigo)
 
@@ -301,7 +313,6 @@ with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
     if not df_filtrado.empty:
-        # (Código de descarga simplificado para ahorrar espacio visual, es el mismo de siempre)
         nombres = {'FOL_PROG':'FOLIO', 'MONTO_TOT':'INVERSIÓN', 'TIPO_CAPA':'CATEGORÍA', col_sup:'SUPERFICIE'}
         df_ex = df_filtrado.drop(columns='geometry', errors='ignore').rename(columns=nombres)
         buff = BytesIO()
@@ -399,7 +410,7 @@ with col_der:
         <div class="metric-label">Superficie Total</div>
         <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
     </div>
-    <div style="text-align:center; margin-bottom:15px; background:#F8F9FA; padding:10px; border-radius:8px; border:1px solid #dcdcdc;">
+    <div class="metric-container">
         <div class="metric-label">PROYECTOS APOYADOS</div>
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
