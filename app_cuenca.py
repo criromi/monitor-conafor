@@ -327,7 +327,7 @@ monto_pi = df_filtrado['MONTO_PI'].sum()
 monto_tot = df_filtrado['MONTO_TOT'].sum()
 col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'SUP_HA', 'HECTAREAS', 'HA']), None)
 sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
-num_proy = len(df_filtrado)
+num_proy = df_filtrado['FOL_PROG'].nunique()
 
 # SECCIÓN DESCARGAS
 with col_izq:
