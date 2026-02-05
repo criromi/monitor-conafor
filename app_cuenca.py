@@ -48,7 +48,7 @@ CATALOGO_CAPAS = {
         "color_chart": COLOR_ACENTO    # Dorado (Gráfica)
     },
     # AGREGA AQUÍ TUS NUEVAS DEPENDENCIAS SI ES NECESARIO:
-    "CUSTF": {"nombre": "Compensación Ambiental", "color_mapa": "#a8a618", "color_chart": "#6f42c1"}
+    "CUSTF": {"nombre": "Compensación Ambiental", "color_mapa": "#a8a618", "color_chart": "#3a0b1e"}
 }
 
 # ==============================================================================
