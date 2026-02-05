@@ -335,7 +335,14 @@ folios_validos = df_filtrado[
     (df_filtrado['FOL_PROG'] != "Sin Dato")
 ]['FOL_PROG']
 
-num_proy = folios_validos.nunique()
+# 1. Convertimos a texto y limpiamos espacios invisibles
+df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
+
+# 2. Definimos qué valores NO son un proyecto (basura o vacíos)
+valores_invalidos = ['nan', 'None', '', 'Sin Dato', 'nan', 'NAN', 'null']
+
+# 3. Contamos solo los que sean folios reales
+num_proy = df_filtrado[~df_filtrado['FOL_PROG'].isin(valores_invalidos)]['FOL_PROG'].nunique()
 
 
 # SECCIÓN DESCARGAS
@@ -537,6 +544,10 @@ with col_der:
         <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
     """, unsafe_allow_html=True)
+
+    # Esto mostrará los 232 valores en una lista pequeña para que encuentres el error
+    st.write("Depuración de folios:", df_filtrado['FOL_PROG'].unique())
+    
     
     if not df_filtrado.empty:
         # --- PIE CHART TENENCIA ---
