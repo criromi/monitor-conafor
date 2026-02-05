@@ -49,7 +49,7 @@ CATALOGO_CAPAS = {
         "color_chart": COLOR_ACENTO    # Dorado (Gráfica)
     },
     # EJEMPLO PARA AGREGAR NUEVAS:
-    # "SAN": {"nombre": "Sanidad", "color_mapa": "#d63384", "color_chart": "#6f42c1"}
+    "CUST": {"nombre": "Compensación Ambiental", "color_mapa": "#ca520c", "color_chart": "#6f42c1"}
 }
 
 # ==============================================================================
