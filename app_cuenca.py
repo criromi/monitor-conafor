@@ -45,10 +45,11 @@ CATALOGO_CAPAS = {
         "color_mapa": "#17a2b8",       
         "color_chart": COLOR_ACENTO    
     },
-    "CUST": { # Ejemplo que tenías en la imagen
+    # AGREGADA TU NUEVA CAPA CON LA CLAVE QUE USASTE 'CUSTF'
+    "CUSTF": { 
         "nombre": "Compensación Ambiental", 
-        "color_mapa": "#ca520c", 
-        "color_chart": "#6f42c1"
+        "color_mapa": "#ca520c",       # Naranja ladrillo para el mapa
+        "color_chart": "#6f42c1"       # Morado para la gráfica (o usa un institucional si prefieres)
     }
 }
 
@@ -104,7 +105,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR
+# 🛠️ MODO ADMINISTRADOR (CON BOTÓN DE DESCARGA PARQUET)
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -125,6 +126,8 @@ if st.session_state.rol == "admin":
 
 if modo_edicion_activo:
     st.title("🛠️ Gestión de Datos - Multidependencia")
+    st.markdown("⚠️ **IMPORTANTE:** Al procesar, descarga el archivo `.parquet` y súbelo manualmente a GitHub.")
+    
     col_up1, col_up2 = st.columns(2)
     with col_up1:
         st.subheader("1. Selección")
@@ -134,7 +137,7 @@ if modo_edicion_activo:
         up_csv = st.file_uploader("Base de Datos (.csv/xlsx)", type=["csv", "xlsx"])
     with col_up2:
         st.subheader("2. Procesamiento")
-        if st.button("🚀 PROCESAR Y GUARDAR", type="primary"):
+        if st.button("🚀 PROCESAR CAPA", type="primary"):
             if up_zip:
                 with st.spinner("Procesando..."):
                     try:
@@ -152,13 +155,31 @@ if modo_edicion_activo:
                                 df_ex = pd.read_excel(up_csv)
                                 
                         gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
+                        
                         if gdf_res is not None:
+                            # 1. Guardar temporalmente para ver cambios YA
                             os.makedirs("datos_web", exist_ok=True)
-                            gdf_res.to_parquet(os.path.join("datos_web", f"capa_{capa_sel}_procesada.parquet"))
+                            nombre_archivo = f"capa_{capa_sel}_procesada.parquet"
+                            ruta_salida = os.path.join("datos_web", nombre_archivo)
+                            gdf_res.to_parquet(ruta_salida)
+                            
                             st.cache_data.clear()
-                            st.success(f"✅ ¡{capa_sel} actualizada!")
+                            st.success(f"✅ ¡Capa {capa_sel} procesada!")
+                            
+                            # 2. GENERAR BOTÓN DE DESCARGA (ESTO ES LO QUE NECESITAS)
+                            with open(ruta_salida, "rb") as f:
+                                st.download_button(
+                                    label=f"💾 DESCARGAR {nombre_archivo} (Para subir a GitHub)",
+                                    data=f,
+                                    file_name=nombre_archivo,
+                                    mime="application/octet-stream",
+                                    type="secondary"
+                                )
+                            st.info(f"👆 **Paso Final:** Descarga este archivo y súbelo a la carpeta 'datos_web' en tu GitHub para que el cambio sea permanente.")
+                            
                         else: st.error(msg)
                     except Exception as e: st.error(f"Error: {e}")
+            else: st.warning("Sube el archivo ZIP.")
     st.stop()
 
 # ==============================================================================
@@ -312,7 +333,7 @@ with col_izq:
                 st.download_button("🌍 Descargar Capa (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
         except: pass
 
-# 2. MAPA (CENTRO) - CORREGIDO PARA CENTRAR CUENCA
+# 2. MAPA (CENTRO) - CORREGIDO
 with col_centro:
     # Lógica de centrado mejorada: Prioridad a la Cuenca
     try:
@@ -375,7 +396,6 @@ with col_centro:
         if 'MUNICIPIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            # FIX: labels
             f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
                        color_discrete_sequence=[COLOR_PRIMARIO],
                        labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
@@ -386,7 +406,6 @@ with col_centro:
             st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
             d['C'] = d['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
-            # FIX: labels
             f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
                        color_discrete_sequence=[COLOR_SECUNDARIO],
                        labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
@@ -421,14 +440,13 @@ with col_der:
     """, unsafe_allow_html=True)
     
     if not df_filtrado.empty:
-        st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">Inversión por Gerencia</div>', unsafe_allow_html=True)
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
         
-        # FIX: labels
         f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', 
                    color_discrete_map=color_map_chart, text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'DEPENDENCIA'})
+                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'GERENCIA'})
         
         f.update_layout(height=250, showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
@@ -436,7 +454,6 @@ with col_der:
         if 'TIPO_PROP' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
             d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-            # FIX: labels
             f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
                        color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
                        labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
