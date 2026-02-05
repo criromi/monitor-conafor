@@ -49,7 +49,7 @@ CATALOGO_CAPAS = {
     "CUSTF": { 
         "nombre": "Compensación Ambiental", 
         "color_mapa": "#ca520c",       
-        "color_chart": "#6f42c1"       
+        "color_chart": "#962121"       
     }
 }
 
