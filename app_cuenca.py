@@ -464,25 +464,31 @@ with col_der:
     """, unsafe_allow_html=True)
     
     if not df_filtrado.empty:
-        st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">Inversión por Dependencia</div>', unsafe_allow_html=True)
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
         color_map_chart = {code: info['color_chart'] for code, info in CATALOGO_CAPAS.items()}
         
-        f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', color='TIPO_CAPA', 
-                   color_discrete_map=color_map_chart, text_auto='.2s',
-                   labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_CAPA': 'PROGRAMA'})
+        # --- CORRECCIÓN AQUÍ ---
+        # 1. Quitamos 'TIPO_CAPA' de 'labels' para evitar el conflicto
+        f = px.bar(d, x='TIPO_CAPA', y='MONTO_TOT', 
+                   color='TIPO_CAPA', 
+                   color_discrete_map=color_map_chart, 
+                   text_auto='.2s',
+                   labels={'MONTO_TOT': 'MONTO TOTAL'}) # Solo renombramos el monto aquí
         
-        f.update_layout(height=250, showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+        # 2. Asignamos el nombre del eje X manualmente en el layout
+        f.update_layout(
+            xaxis_title="DEPENDENCIA",  # <--- Aquí definimos el nombre seguro
+            yaxis_title="MONTO TOTAL",
+            height=250, 
+            showlegend=False, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(t=10,b=10)
+        )
+        # -----------------------
+        
         st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
-
-        if 'TIPO_PROP' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
-            d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-            f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
-                       color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
-                       labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
-            f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), legend=dict(orientation="h"))
-            st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
 with st.expander("📋 Ver Base de Datos Completa"):
     st.dataframe(df_filtrado.drop(columns='geometry', errors='ignore'), use_container_width=True)
