@@ -11,7 +11,14 @@ import base64
 from io import BytesIO
 import zipfile
 import tempfile
+import shutil
 from datetime import datetime 
+
+# Intentamos importar el backend de admin si existe, si no, manejaremos la excepción
+try:
+    import backend_admin
+except ImportError:
+    backend_admin = None
 
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲")
@@ -42,13 +49,13 @@ st.markdown(f"""
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* Estilos Generales */
+    /* Contenedores de columnas Generales */
     div[data-testid="column"] {{
         background-color: white; border-radius: 12px; padding: 15px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     
-    /* Pestañas */
+    /* Pestañas (Tabs) Estilizadas */
     .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
     .stTabs [data-baseweb="tab"] {{
         height: 45px; white-space: pre-wrap; background-color: white;
@@ -59,11 +66,17 @@ st.markdown(f"""
         background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
     }}
 
-    /* Títulos y Métricas */
+    /* Títulos */
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
     }}
+    .chart-title {{
+        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
+        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
+    }}
+    
+    /* Métricas Derecha */
     .metric-container {{
         background-color: #F8F9FA; border-radius: 8px; padding: 10px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
@@ -71,17 +84,19 @@ st.markdown(f"""
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
     .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     
-    /* Botón Discreto de Impresión */
+    /* Ajuste para botón de impresión en header */
     div[data-testid="stVerticalBlock"] > div:first-child {{
         padding-top: 0px;
     }}
+    div.stButton > button {{ width: 100%; }}
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
 # 🔐 LOGIN
 # ==============================================================================
-if 'rol' not in st.session_state: st.session_state.rol = None
+if 'rol' not in st.session_state:
+    st.session_state.rol = None
 
 if st.session_state.rol is None:
     ruta_logo = None
@@ -113,22 +128,70 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR
+# 🛠️ MODO ADMINISTRADOR (RESTAURADO COMPLETO)
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
     with st.sidebar:
         st.header("🔧 Panel Administrador")
         seleccion = st.radio("Acciones:", ["👁️ Ver Monitor", "📤 Subir/Actualizar Capas"])
-        if seleccion == "📤 Subir/Actualizar Capas": modo_edicion_activo = True
+        st.markdown("---")
+        with st.expander("⚙️ Opciones Avanzadas"):
+            if st.button("🔄 Forzar Recarga"):
+                st.cache_data.clear()
+                st.rerun()
+        if seleccion == "📤 Subir/Actualizar Capas":
+            modo_edicion_activo = True
         st.markdown("---")
         if st.button("Cerrar Sesión"):
             st.session_state.rol = None
             st.rerun()
 
 if modo_edicion_activo:
-    st.title("🛠️ Gestión de Datos")
-    st.info("Panel de carga de archivos activo.")
+    st.title("🛠️ Gestión de Datos - Multidependencia")
+    st.markdown("⚠️ **IMPORTANTE:** Sube el ZIP del Shapefile y (opcionalmente) el Excel asociado.")
+    
+    col_up1, col_up2 = st.columns(2)
+    with col_up1:
+        st.subheader("1. Selección")
+        opciones = list(CATALOGO_CAPAS.keys())
+        capa_sel = st.selectbox("Capa a actualizar:", opciones, format_func=lambda x: f"{x} - {CATALOGO_CAPAS[x]['nombre']}")
+        up_zip = st.file_uploader("Shapefile (.zip)", type="zip")
+        up_csv = st.file_uploader("Base de Datos (.csv/xlsx)", type=["csv", "xlsx"])
+    with col_up2:
+        st.subheader("2. Procesamiento")
+        if st.button("🚀 PROCESAR CAPA", type="primary"):
+            if up_zip:
+                with st.spinner("Procesando..."):
+                    try:
+                        if backend_admin is None:
+                            st.error("Error: No se encontró el módulo 'backend_admin.py'. Asegúrate de que el archivo exista.")
+                        else:
+                            df_ex = None
+                            if up_csv:
+                                if up_csv.name.endswith('.csv'):
+                                    try:
+                                        df_ex = pd.read_csv(up_csv, encoding='utf-8')
+                                    except UnicodeDecodeError:
+                                        up_csv.seek(0)
+                                        df_ex = pd.read_csv(up_csv, encoding='latin-1')
+                                else:
+                                    df_ex = pd.read_excel(up_csv)
+                                    
+                            gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
+                            
+                            if gdf_res is not None:
+                                os.makedirs("datos_web", exist_ok=True)
+                                nombre_archivo = f"capa_{capa_sel}_procesada.parquet"
+                                ruta_salida = os.path.join("datos_web", nombre_archivo)
+                                gdf_res.to_parquet(ruta_salida)
+                                
+                                st.cache_data.clear()
+                                st.success(f"✅ ¡Capa {capa_sel} procesada exitosamente!")
+                                st.info(f"Guardado en: {ruta_salida}")
+                            else: st.error(msg)
+                    except Exception as e: st.error(f"Error crítico: {e}")
+            else: st.warning("Por favor sube al menos el archivo ZIP.")
     st.stop()
 
 # ==============================================================================
@@ -175,24 +238,23 @@ def cargar_datos():
 
 df_total, cuenca = cargar_datos()
 if df_total is None:
-    st.info("Sin datos cargados.")
+    st.info("⚠️ No hay datos cargados. Sube capas en el panel de Administrador.")
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (CORREGIDO)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (FIX MAPA + DATOS)
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     """
-    Recibe df_raw (con columnas originales como MONTO_TOT) para cálculos,
-    y luego renombra internamente para mostrar la tabla bonita.
+    Genera el HTML con iframe para el mapa y datos corregidos.
     """
-    # 1. Cálculos de KPIs usando nombres originales
+    # 1. Cálculos de KPIs con nombres originales
     m_tot = df_raw['MONTO_TOT'].sum() if 'MONTO_TOT' in df_raw.columns else 0
     s_tot = df_raw['SUPERFICIE'].sum() if 'SUPERFICIE' in df_raw.columns else 0
     n_proy = len(df_raw)
     fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    # 2. Preparar Tabla Visual (Renombrar aquí)
+    # 2. Renombrar para Tabla Visual
     CONFIG_RENOMBRE = {
         "FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", 
         "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", 
@@ -201,7 +263,10 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     cols_ok = [c for c in CONFIG_RENOMBRE.keys() if c in df_raw.columns]
     df_visual = df_raw[cols_ok].rename(columns=CONFIG_RENOMBRE)
 
-    # 3. Estilos CSS
+    # 3. Escapar mapa
+    map_srcdoc = map_html.replace('"', '&quot;')
+
+    # 4. CSS
     css = f"""
     <style>
         body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
@@ -209,36 +274,23 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         .header {{ border-bottom: 4px solid {COLOR_ACENTO}; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
         .titulo {{ font-size: 28px; font-weight: bold; color: {COLOR_SECUNDARIO}; margin: 0; }}
         .subtitulo {{ font-size: 16px; color: {COLOR_PRIMARIO}; font-weight: bold; }}
-        
-        /* KPIs */
         .kpi-row {{ display: flex; gap: 20px; margin-bottom: 20px; }}
         .kpi-card {{ flex: 1; background: #f4f4f4; padding: 15px; border-left: 6px solid {COLOR_PRIMARIO}; text-align: center; }}
         .kpi-val {{ font-size: 24px; font-weight: bold; color: {COLOR_PRIMARIO}; display: block; }}
         .kpi-lbl {{ font-size: 12px; text-transform: uppercase; color: #666; }}
-        
-        /* Mapa */
         .map-container {{ width: 100%; height: 500px; border: 1px solid #ccc; margin-bottom: 20px; }}
-        
-        /* Gráficos */
         .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
         .chart-full {{ width: 100%; margin-bottom: 20px; }}
-        
-        /* Tabla */
         table {{ width: 100%; border-collapse: collapse; font-size: 10px; }}
         th {{ background-color: {COLOR_PRIMARIO}; color: white; padding: 5px; text-align: left; }}
         td {{ border-bottom: 1px solid #ddd; padding: 5px; }}
         tr:nth-child(even) {{ background-color: #f9f9f9; }}
-        
-        @media print {{
-            .no-print {{ display: none; }}
-            body {{ -webkit-print-color-adjust: exact; }}
-        }}
+        @media print {{ .no-print {{ display: none; }} body {{ -webkit-print-color-adjust: exact; }} }}
     </style>
     """
     
     logo_img = f'<img src="data:image/png;base64,{logo_b64}" height="60">' if logo_b64 else ''
     
-    # 4. Construcción del HTML
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -266,17 +318,12 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
 
         <h3>📍 Ubicación Geográfica</h3>
         <div class="map-container">
-            {map_html}
+            <iframe srcdoc="{map_srcdoc}" width="100%" height="100%" frameborder="0" style="border:0;"></iframe>
         </div>
         
         <div class="page-break"></div>
-        <div class="header">
-            <div class="titulo">ANÁLISIS ESTADÍSTICO</div>
-            {logo_img}
-        </div>
-        
+        <div class="header"><div class="titulo">ANÁLISIS ESTADÍSTICO</div>{logo_img}</div>
         <div class="chart-full">{figuras_html.get('linea', '')}</div>
-        
         <div class="chart-grid">
             <div>{figuras_html.get('barras', '')}</div>
             <div>{figuras_html.get('muni', '')}</div>
@@ -285,20 +332,15 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         </div>
 
         <div class="page-break"></div>
-        <div class="header">
-            <div class="titulo">DETALLE DE DATOS</div>
-            {logo_img}
-        </div>
-        
+        <div class="header"><div class="titulo">DETALLE DE DATOS</div>{logo_img}</div>
         {df_visual.to_html(index=False, border=0)}
-        
     </body>
     </html>
     """
     return html.encode('utf-8')
 
 # ==============================================================================
-# 🏁 HEADER PRINCIPAL Y BOTÓN DISCRETO
+# 🏁 HEADER PRINCIPAL
 # ==============================================================================
 def get_logo():
     for ext in [".png", ".jpg", ".jpeg"]:
@@ -309,9 +351,7 @@ def get_logo():
 
 logo_b64, ext_enc = get_logo()
 
-# --- LAYOUT SUPERIOR ---
 col_head_tit, col_head_btn = st.columns([9, 1], vertical_alignment="top")
-
 with col_head_tit:
     if logo_b64:
         st.markdown(f"""
@@ -337,7 +377,6 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 with col_izq:
     st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
     busqueda = st.text_input("Buscar:", placeholder="Beneficiario, Folio o Municipio...", help="Escribe para filtrar")
-    
     st.markdown('<div style="margin-top:15px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">🎛️ CAPAS DISPONIBLES</div>', unsafe_allow_html=True)
     
@@ -348,7 +387,6 @@ with col_izq:
                 capas_activas.append(codigo)
 
     df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
-
     if busqueda:
         busqueda = busqueda.upper()
         mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(busqueda, na=False)) | \
@@ -365,8 +403,7 @@ with col_centro:
         elif not df_filtrado.empty:
             b = df_filtrado.total_bounds
             clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
-        else:
-            clat, clon, zoom = 20.5, -101.5, 7
+        else: clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
     
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
@@ -374,10 +411,7 @@ with col_centro:
     folium.TileLayer("CartoDB positron", name="Mapa Claro", overlay=False, control=True).add_to(m)
     
     if cuenca is not None:
-        folium.GeoJson(
-            cuenca, name="Límite de Cuenca", 
-            style_function=lambda x: {'fillColor': 'none', 'color': '#FFD700', 'weight': 3, 'dashArray': '10, 5'}
-        ).add_to(m)
+        folium.GeoJson(cuenca, name="Límite de Cuenca", style_function=lambda x: {'fillColor': 'none', 'color': '#FFD700', 'weight': 3, 'dashArray': '10, 5'}).add_to(m)
         try:
             bounds = cuenca.total_bounds
             m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
@@ -405,9 +439,7 @@ with col_centro:
     ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
     macro = MacroElement()
     macro._template = Template(f"""{{% macro html(this, kwargs) %}}
-    <div style="position: fixed; bottom: 30px; right: 30px; background:rgba(255,255,255,0.95); padding:10px; border-radius:5px; border:1px solid #ccc; z-index:999; font-size:11px; font-family:Arial; font-weight:bold;">
-        {ley_html}
-    </div>{{% endmacro %}}""")
+    <div style="position: fixed; bottom: 30px; right: 30px; background:rgba(255,255,255,0.95); padding:10px; border-radius:5px; border:1px solid #ccc; z-index:999; font-size:11px; font-family:Arial; font-weight:bold;">{ley_html}</div>{{% endmacro %}}""")
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=550, returned_objects=[])
 
@@ -446,12 +478,10 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📊 PREPARACIÓN DE GRÁFICOS (PARA REPORTE)
+# 📊 GRÁFICOS PARA REPORTE
 # ==============================================================================
-figs_reporte = {} 
-
+figs_reporte = {}
 if not df_filtrado.empty:
-    # 1. LÍNEA
     d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
     d_anio = d_anio[d_anio['ANIO'] > 0]
     fig_linea = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True, color_discrete_sequence=[COLOR_SECUNDARIO], labels={'MONTO_TOT': 'MONTO', 'ANIO': 'AÑO'}, title="Evolución Histórica")
@@ -459,26 +489,22 @@ if not df_filtrado.empty:
     fig_linea.update_layout(height=300, margin=dict(t=30,b=10))
     figs_reporte['linea'] = fig_linea.to_html(full_html=False, include_plotlyjs='cdn')
 
-    # 2. BARRAS PROGRAMA
     d_prog = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
     colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d_prog['TIPO_CAPA']]
     fig_bar = go.Figure(data=[go.Bar(x=d_prog['TIPO_CAPA'], y=d_prog['MONTO_TOT'], text=d_prog['MONTO_TOT'], texttemplate='$%{text:.2s}', marker_color=colors)])
     fig_bar.update_layout(title="Inversión por Programa", height=250, margin=dict(t=30,b=10))
     figs_reporte['barras'] = fig_bar.to_html(full_html=False, include_plotlyjs='cdn')
 
-    # 3. MUNICIPIOS
     d_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
     fig_mun = px.bar(d_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO], title="Top Municipios")
     fig_mun.update_layout(height=250, margin=dict(t=30,b=10))
     figs_reporte['muni'] = fig_mun.to_html(full_html=False, include_plotlyjs='cdn')
 
-    # 4. PASTEL
     d_reg = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
     fig_pie = px.pie(d_reg, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO], title="Régimen")
     fig_pie.update_layout(height=250, margin=dict(t=30,b=10))
     figs_reporte['pastel'] = fig_pie.to_html(full_html=False, include_plotlyjs='cdn')
 
-    # 5. CONCEPTOS
     d_con = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
     d_con['C'] = d_con['CONCEPTO'].apply(lambda x: x[:25]+'...' if len(x)>25 else x)
     fig_con = px.bar(d_con, y='C', x='MONTO_TOT', orientation='h', color_discrete_sequence=[COLOR_SECUNDARIO], title="Conceptos")
@@ -486,42 +512,29 @@ if not df_filtrado.empty:
     figs_reporte['concepto'] = fig_con.to_html(full_html=False, include_plotlyjs='cdn')
 
 # ==============================================================================
-# 🖨️ BOTÓN "DISIMULADO" EN HEADER
+# 🖨️ BOTÓN HEADER
 # ==============================================================================
 with col_head_btn:
     st.write("") 
     if not df_filtrado.empty:
         map_html = m.get_root().render()
-        
-        # FIX: Pasamos df_filtrado DIRECTAMENTE (con las columnas originales)
         html_reporte = generar_reporte_completo_html(df_filtrado, map_html, figs_reporte, logo_b64)
-        
-        st.download_button(
-            label="🖨️",
-            data=html_reporte,
-            file_name=f"Proyecto_Cuenca_{datetime.now().strftime('%Y%m%d')}.html",
-            mime="text/html",
-            help="Descargar Proyecto Completo para Imprimir (Mapa + Gráficos + Tablas)",
-            use_container_width=True
-        )
+        st.download_button("🖨️", html_reporte, f"Reporte_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True)
 
 # ==============================================================================
-# 📑 PESTAÑAS VISUALES (UI)
+# 📑 PESTAÑAS (UI)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
 
 with tab_graficos:
     if not df_filtrado.empty:
-        with st.container(border=True):
-            st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
-        
+        with st.container(border=True): st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
         c1, c2 = st.columns(2)
         with c1: 
             with st.container(border=True): st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
         with c2: 
             with st.container(border=True): st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
-            
         c3, c4 = st.columns(2)
         with c3: 
             with st.container(border=True): st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
@@ -555,14 +568,4 @@ with tab_tabla:
         with b1: st.download_button("📥 Excel", generar_excel(df_tabla), "Datos.xlsx", "application/vnd.ms-excel")
         with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Mapa.zip", "application/zip")
 
-    st.dataframe(
-        df_tabla,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "TOTAL": st.column_config.NumberColumn(format="$ %.2f"),
-            "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"),
-            "EJERCICIO": st.column_config.NumberColumn(format="%d"),
-            "BENEFICIARIO": st.column_config.TextColumn(width="large"),
-        }
-    )
+    st.dataframe(df_tabla, use_container_width=True, hide_index=True, column_config={"TOTAL": st.column_config.NumberColumn(format="$ %.2f"), "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"), "EJERCICIO": st.column_config.NumberColumn(format="%d")})
