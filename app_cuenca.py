@@ -42,82 +42,49 @@ CATALOGO_CAPAS = {
 }
 
 # ==============================================================================
-# 📑 SECCIÓN DE DETALLES (EXPANDERS CON RECUADROS)
+# 🎨 ESTILOS CSS (INTERFAZ WEB)
 # ==============================================================================
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Estilo adicional para los contenedores de gráficos dentro del expander
-st.markdown("""
+st.markdown(f"""
     <style>
-    .plot-card {
-        background-color: white;
-        border: 1px solid #e6e9ef;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-        margin-bottom: 20px;
-    }
+    #MainMenu, footer {{visibility: hidden;}}
+    .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
+    
+    div[data-testid="column"] {{
+        background-color: white; border-radius: 12px; padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
+    }}
+    
+    /* Estilo para los Expanders (Desplegables) */
+    .streamlit-expanderHeader {{
+        font-weight: bold;
+        color: {COLOR_PRIMARIO};
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }}
+
+    .section-header {{
+        color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
+        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
+    }}
+    .chart-title {{
+        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
+        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
+    }}
+    
+    .metric-container {{
+        background-color: #F8F9FA; border-radius: 8px; padding: 10px;
+        margin-bottom: 8px; text-align: center; border: 1px solid #eee;
+    }}
+    .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
+    .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
+    
+    div[data-testid="stVerticalBlock"] > div:first-child {{
+        padding-top: 0px;
+    }}
+    div.stButton > button {{ width: 100%; }}
     </style>
 """, unsafe_allow_html=True)
 
-# 1. EXPANDER: DETALLES Y GRÁFICOS
-with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=False):
-    if not df_filtrado.empty:
-        # Gráfico de Línea en su propio recuadro
-        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-        st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Fila de 3 gráficos con sus recuadros individuales
-        c_g1, c_g2, c_g3 = st.columns(3)
-        
-        with c_g1: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        with c_g2: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        with c_g3: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Gráfico de Conceptos en su propio recuadro
-        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-        st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# 2. EXPANDER: TABLA DE DATOS
-with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=False):
-    # Envolvemos la tabla también en un recuadro para mantener la consistencia
-    st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-    
-    c_tit, c_btns = st.columns([5, 2])
-    with c_tit: 
-        st.subheader("Base de Datos de Apoyos")
-    
-    # ... (el resto del código de la tabla permanece igual)
-    with c_btns:
-        b1, b2 = st.columns(2)
-        with b1: st.download_button("📥 Excel", generar_excel(df_tabla), "Datos.xlsx", "application/vnd.ms-excel")
-        with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Mapa.zip", "application/zip")
-
-    st.dataframe(
-        df_tabla, 
-        use_container_width=True, 
-        hide_index=True, 
-        column_config={
-            "TOTAL": st.column_config.NumberColumn(format="$ %.2f"), 
-            "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"), 
-            "EJERCICIO": st.column_config.NumberColumn(format="%d")
-        }
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-    
 # ==============================================================================
 # 🔐 LOGIN
 # ==============================================================================
@@ -647,33 +614,62 @@ with col_head_btn:
         st.download_button("🖨️", html_reporte, f"Reporte_CONAFOR_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True, help="Descargar Reporte Ejecutivo para Imprimir")
 
 # ==============================================================================
-# 📑 PESTAÑAS (UI PANTALLA)
+# 📑 SECCIÓN DE DETALLES (EXPANDERS CON RECUADROS) - SUSTITUIR DESDE AQUÍ
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 
+# Estilo para las tarjetas de los gráficos
+st.markdown("""
+    <style>
+    .plot-card {
+        background-color: white;
+        border: 1px solid #e6e9ef;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        margin-bottom: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # 1. EXPANDER: DETALLES Y GRÁFICOS
-with st.expander("Ampliar para obtener detalles y gráficos", expanded=False):
+with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=False):
     if not df_filtrado.empty:
+        # Gráfico de Línea
+        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
         st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
         
+        # Fila de 3 gráficos
         c_g1, c_g2, c_g3 = st.columns(3)
         with c_g1: 
+            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+            st.markdown('</div>', unsafe_allow_html=True)
         with c_g2: 
+            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+            st.markdown('</div>', unsafe_allow_html=True)
         with c_g3: 
+            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
+            st.markdown('</div>', unsafe_allow_html=True)
         
+        # Gráfico de Conceptos
+        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
         st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # 2. EXPANDER: TABLA DE DATOS
-with st.expander("Ampliar para visualizar y descargar la tabla", expanded=False):
+with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=False):
+    st.markdown('<div class="plot-card">', unsafe_allow_html=True)
     c_tit, c_btns = st.columns([5, 2])
-    with c_tit: st.subheader("📑 Detalle de Apoyos")
+    with c_tit: st.subheader("Base de Datos de Apoyos")
     
+    # Preparación de datos para la tabla
     CONFIG_COLUMNAS = {"FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"}
     cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
-    df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
+    df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_RENOMBRE if 'CONFIG_RENOMBRE' in locals() else CONFIG_COLUMNAS)
 
     def generar_excel(df):
         out = BytesIO()
@@ -695,3 +691,4 @@ with st.expander("Ampliar para visualizar y descargar la tabla", expanded=False)
         with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Mapa.zip", "application/zip")
 
     st.dataframe(df_tabla, use_container_width=True, hide_index=True, column_config={"TOTAL": st.column_config.NumberColumn(format="$ %.2f"), "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"), "EJERCICIO": st.column_config.NumberColumn(format="%d")})
+    st.markdown('</div>', unsafe_allow_html=True)
