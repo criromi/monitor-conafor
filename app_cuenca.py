@@ -43,7 +43,6 @@ st.markdown(f"""
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* Contenedores de columnas Generales */
     div[data-testid="column"]:nth-of-type(1) > div {{
         background-color: white; border-radius: 12px; padding: 20px;
         border: 1px solid #e0e0e0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); height: 100%;
@@ -54,7 +53,6 @@ st.markdown(f"""
         box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     
-    /* Pestañas (Tabs) Estilizadas */
     .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
     .stTabs [data-baseweb="tab"] {{
         height: 45px; white-space: pre-wrap; background-color: white;
@@ -65,7 +63,6 @@ st.markdown(f"""
         background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
     }}
 
-    /* Títulos */
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
@@ -75,7 +72,6 @@ st.markdown(f"""
         text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
     }}
     
-    /* Métricas Derecha */
     .metric-container {{
         background-color: #F8F9FA; border-radius: 8px; padding: 10px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
@@ -83,10 +79,7 @@ st.markdown(f"""
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
     .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     
-    /* Ajuste Botones Descarga */
-    div.stButton > button {{
-        width: 100%;
-    }}
+    div.stButton > button {{ width: 100%; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -435,7 +428,7 @@ with tab_graficos:
 
 # --- TAB 2: TABLA ---
 with tab_tabla:
-    col_t1, col_t2 = st.columns([4, 2])
+    col_t1, col_t2 = st.columns([5, 2])
     with col_t1: st.subheader("📑 Detalle de Apoyos")
     
     CONFIG_COLUMNAS = {
@@ -446,7 +439,63 @@ with tab_tabla:
     cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
     df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
 
-    # Funciones de descarga
+    # --- GENERADOR DE REPORTE HTML PARA PDF ---
+    def generar_html_imprimible(df, logo_base64=None):
+        # Cálculos para el reporte
+        total_monto = df["TOTAL"].sum() if "TOTAL" in df.columns else 0
+        total_sup = df["SUP (HA)"].sum() if "SUP (HA)" in df.columns else 0
+        total_proy = len(df)
+        fecha = datetime.now().strftime("%d/%m/%Y")
+        
+        # HTML Estilizado
+        html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }}
+                .header {{ display: flex; justify-content: space-between; border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 10px; margin-bottom: 20px; }}
+                .titulo {{ color: {COLOR_SECUNDARIO}; font-size: 24px; font-weight: bold; }}
+                .subtitulo {{ color: {COLOR_PRIMARIO}; font-size: 14px; font-weight: bold; }}
+                .kpis {{ display: flex; gap: 20px; margin-bottom: 20px; }}
+                .kpi-card {{ background: #f8f9fa; padding: 10px; border-left: 5px solid {COLOR_PRIMARIO}; width: 30%; }}
+                .kpi-val {{ font-size: 18px; font-weight: bold; color: {COLOR_PRIMARIO}; }}
+                table {{ width: 100%; border-collapse: collapse; font-size: 10px; }}
+                th {{ background-color: {COLOR_PRIMARIO}; color: white; padding: 8px; text-align: left; }}
+                td {{ border-bottom: 1px solid #ddd; padding: 6px; }}
+                tr:nth-child(even) {{ background-color: #f2f2f2; }}
+                .footer {{ margin-top: 30px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }}
+                @media print {{ .no-print {{ display: none; }} }}
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="text-align:right; margin-bottom:10px;">
+                <button onclick="window.print()" style="padding:10px 20px; background:{COLOR_PRIMARIO}; color:white; border:none; cursor:pointer; font-weight:bold;">🖨️ IMPRIMIR / GUARDAR PDF</button>
+            </div>
+            <div class="header">
+                <div>
+                    <div class="titulo">REPORTE EJECUTIVO</div>
+                    <div class="subtitulo">MONITOR DE PROYECTOS | CONAFOR</div>
+                    <div>Fecha de corte: {fecha}</div>
+                </div>
+                {'<img src="data:image/png;base64,' + logo_base64 + '" height="60">' if logo_base64 else ''}
+            </div>
+
+            <div class="kpis">
+                <div class="kpi-card"><div>INVERSIÓN TOTAL</div><div class="kpi-val">${total_monto:,.2f}</div></div>
+                <div class="kpi-card"><div>SUPERFICIE TOTAL</div><div class="kpi-val">{total_sup:,.2f} ha</div></div>
+                <div class="kpi-card"><div>PROYECTOS</div><div class="kpi-val">{total_proy}</div></div>
+            </div>
+
+            {df.to_html(index=False, classes='table', border=0)}
+
+            <div class="footer">
+                Generado automáticamente por el Monitor de Proyectos Cuenca Lerma-Santiago. | Documento informativo.
+            </div>
+        </body>
+        </html>
+        """
+        return html.encode('utf-8')
+
     def generar_excel_ejecutivo(df):
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -457,39 +506,24 @@ with tab_tabla:
         return output.getvalue()
     
     def generar_shp_zip(df_gdf):
-        # Usamos el GeoDataFrame original filtrado (con geometría)
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Guardar Shapefile (son varios archivos)
             ruta_shp = os.path.join(temp_dir, "Proyectos_Conafor.shp")
             df_gdf.to_file(ruta_shp)
-            
-            # Zipear todo
             mem_zip = BytesIO()
             with zipfile.ZipFile(mem_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(temp_dir):
-                    for file in files:
-                        zf.write(os.path.join(root, file), file)
+                    for file in files: zf.write(os.path.join(root, file), file)
             return mem_zip.getvalue()
 
-    # Botones en columna derecha
     with col_t2:
-        c_btn1, c_btn2 = st.columns(2)
-        with c_btn1:
-            st.download_button(
-                label="📥 Excel",
-                data=generar_excel_ejecutivo(df_tabla),
-                file_name=f"Reporte_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-        with c_btn2:
-             st.download_button(
-                label="🌍 Shapefile",
-                data=generar_shp_zip(df_filtrado),
-                file_name=f"Geodata_{datetime.now().strftime('%Y%m%d')}.zip",
-                mime="application/zip",
-                use_container_width=True
-            )
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.download_button("📊 Excel", generar_excel_ejecutivo(df_tabla), f"Reporte_{datetime.now().strftime('%Y%m%d')}.xlsx", "application/vnd.ms-excel")
+        with c2:
+            st.download_button("🌍 Shapefile", generar_shp_zip(df_filtrado), f"Geodata_{datetime.now().strftime('%Y%m%d')}.zip", "application/zip")
+        with c3:
+            # Botón PDF/HTML
+            st.download_button("🖨️ PDF / Imprimir", generar_html_imprimible(df_tabla, logo_b64), f"Reporte_{datetime.now().strftime('%Y%m%d')}.html", "text/html")
 
     st.dataframe(
         df_tabla,
