@@ -9,6 +9,9 @@ import plotly.graph_objects as go
 from branca.element import MacroElement, Template
 import base64
 from io import BytesIO
+import zipfile
+import tempfile
+import shutil
 from datetime import datetime 
 
 # --- 1. CONFIGURACIÓN INICIAL ---
@@ -79,6 +82,11 @@ st.markdown(f"""
     }}
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
     .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
+    
+    /* Ajuste Botones Descarga */
+    div.stButton > button {{
+        width: 100%;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -359,8 +367,8 @@ tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATO
 # --- TAB 1: GRÁFICOS (TARJETAS + COMPACTOS) ---
 with tab_graficos:
     if not df_filtrado.empty:
-        # 1. GRÁFICO HISTÓRICO (Línea)
-        with st.container(border=True): # <--- RECUADRO
+        # 1. GRÁFICO HISTÓRICO
+        with st.container(border=True):
             if 'ANIO' in df_filtrado.columns:
                 st.markdown('<div class="chart-title">Evolución de Inversión por Ejercicio</div>', unsafe_allow_html=True)
                 d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
@@ -371,14 +379,13 @@ with tab_graficos:
                               labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
                 
                 fig.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
-                # Altura reducida a 250px
                 fig.update_layout(height=250, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-        # 2. GRID DE GRÁFICOS (Barras/Pastel)
+        # 2. GRID DE GRÁFICOS
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            with st.container(border=True): # <--- RECUADRO
+            with st.container(border=True):
                 st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
                 d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
                 colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d['TIPO_CAPA']]
@@ -388,37 +395,34 @@ with tab_graficos:
                     text=d['MONTO_TOT'], texttemplate='$%{text:.2s}', textposition='auto',
                     marker_color=colors
                 )])
-                # Altura reducida a 200px
                 fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=200, 
                                   margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
 
         with col_g2:
-            with st.container(border=True): # <--- RECUADRO
+            with st.container(border=True):
                 if 'MUNICIPIO' in df_filtrado.columns:
                     st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
                     d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
                     f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
                                color_discrete_sequence=[COLOR_PRIMARIO],
                                labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
-                    # Altura reducida a 200px
                     f.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
                     st.plotly_chart(f, use_container_width=True)
         
         col_g3, col_g4 = st.columns(2)
         with col_g3:
-             with st.container(border=True): # <--- RECUADRO
+             with st.container(border=True):
                  if 'TIPO_PROP' in df_filtrado.columns:
                     st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
                     d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
                     f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
                                color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
                                labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
-                    # Altura reducida a 200px
                     f.update_layout(height=200, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
                     st.plotly_chart(f, use_container_width=True)
         with col_g4:
-             with st.container(border=True): # <--- RECUADRO
+             with st.container(border=True):
                  if 'CONCEPTO' in df_filtrado.columns:
                     st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
                     d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
@@ -426,13 +430,12 @@ with tab_graficos:
                     f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
                                color_discrete_sequence=[COLOR_SECUNDARIO],
                                labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
-                    # Altura reducida a 200px
                     f.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
                     st.plotly_chart(f, use_container_width=True)
 
 # --- TAB 2: TABLA ---
 with tab_tabla:
-    col_t1, col_t2 = st.columns([5, 1])
+    col_t1, col_t2 = st.columns([4, 2])
     with col_t1: st.subheader("📑 Detalle de Apoyos")
     
     CONFIG_COLUMNAS = {
@@ -443,6 +446,7 @@ with tab_tabla:
     cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
     df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
 
+    # Funciones de descarga
     def generar_excel_ejecutivo(df):
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -451,15 +455,41 @@ with tab_tabla:
             for i, col in enumerate(df.columns):
                 worksheet.set_column(i, i, 20)
         return output.getvalue()
+    
+    def generar_shp_zip(df_gdf):
+        # Usamos el GeoDataFrame original filtrado (con geometría)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Guardar Shapefile (son varios archivos)
+            ruta_shp = os.path.join(temp_dir, "Proyectos_Conafor.shp")
+            df_gdf.to_file(ruta_shp)
+            
+            # Zipear todo
+            mem_zip = BytesIO()
+            with zipfile.ZipFile(mem_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        zf.write(os.path.join(root, file), file)
+            return mem_zip.getvalue()
 
+    # Botones en columna derecha
     with col_t2:
-        st.download_button(
-            label="📥 Descargar Excel",
-            data=generar_excel_ejecutivo(df_tabla),
-            file_name=f"Reporte_Cuenca.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
+        c_btn1, c_btn2 = st.columns(2)
+        with c_btn1:
+            st.download_button(
+                label="📥 Excel",
+                data=generar_excel_ejecutivo(df_tabla),
+                file_name=f"Reporte_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+        with c_btn2:
+             st.download_button(
+                label="🌍 Shapefile",
+                data=generar_shp_zip(df_filtrado),
+                file_name=f"Geodata_{datetime.now().strftime('%Y%m%d')}.zip",
+                mime="application/zip",
+                use_container_width=True
+            )
 
     st.dataframe(
         df_tabla,
