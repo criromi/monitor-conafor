@@ -14,7 +14,7 @@ import tempfile
 import shutil
 from datetime import datetime 
 
-# Intentamos importar el backend de admin si existe, si no, manejaremos la excepción
+# Intentamos importar el backend de admin si existe
 try:
     import backend_admin
 except ImportError:
@@ -49,13 +49,11 @@ st.markdown(f"""
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* Contenedores de columnas Generales */
     div[data-testid="column"] {{
         background-color: white; border-radius: 12px; padding: 15px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     
-    /* Pestañas (Tabs) Estilizadas */
     .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
     .stTabs [data-baseweb="tab"] {{
         height: 45px; white-space: pre-wrap; background-color: white;
@@ -66,7 +64,6 @@ st.markdown(f"""
         background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
     }}
 
-    /* Títulos */
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
@@ -76,7 +73,6 @@ st.markdown(f"""
         text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
     }}
     
-    /* Métricas Derecha */
     .metric-container {{
         background-color: #F8F9FA; border-radius: 8px; padding: 10px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
@@ -84,7 +80,6 @@ st.markdown(f"""
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
     .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     
-    /* Ajuste para botón de impresión en header */
     div[data-testid="stVerticalBlock"] > div:first-child {{
         padding-top: 0px;
     }}
@@ -128,7 +123,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR (RESTAURADO COMPLETO)
+# 🛠️ MODO ADMINISTRADOR
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -149,13 +144,11 @@ if st.session_state.rol == "admin":
 
 if modo_edicion_activo:
     st.title("🛠️ Gestión de Datos - Multidependencia")
-    st.markdown("⚠️ **IMPORTANTE:** Sube el ZIP del Shapefile y (opcionalmente) el Excel asociado.")
-    
     col_up1, col_up2 = st.columns(2)
     with col_up1:
         st.subheader("1. Selección")
         opciones = list(CATALOGO_CAPAS.keys())
-        capa_sel = st.selectbox("Capa a actualizar:", opciones, format_func=lambda x: f"{x} - {CATALOGO_CAPAS[x]['nombre']}")
+        capa_sel = st.selectbox("Capa:", opciones)
         up_zip = st.file_uploader("Shapefile (.zip)", type="zip")
         up_csv = st.file_uploader("Base de Datos (.csv/xlsx)", type=["csv", "xlsx"])
     with col_up2:
@@ -165,33 +158,22 @@ if modo_edicion_activo:
                 with st.spinner("Procesando..."):
                     try:
                         if backend_admin is None:
-                            st.error("Error: No se encontró el módulo 'backend_admin.py'. Asegúrate de que el archivo exista.")
+                            st.error("Error: backend_admin no encontrado.")
                         else:
                             df_ex = None
                             if up_csv:
-                                if up_csv.name.endswith('.csv'):
-                                    try:
-                                        df_ex = pd.read_csv(up_csv, encoding='utf-8')
-                                    except UnicodeDecodeError:
-                                        up_csv.seek(0)
-                                        df_ex = pd.read_csv(up_csv, encoding='latin-1')
-                                else:
-                                    df_ex = pd.read_excel(up_csv)
-                                    
+                                df_ex = pd.read_csv(up_csv, encoding='latin-1') if up_csv.name.endswith('.csv') else pd.read_excel(up_csv)
+                            
                             gdf_res, msg = backend_admin.procesar_zip_upload(up_zip, capa_sel, df_ex)
                             
                             if gdf_res is not None:
                                 os.makedirs("datos_web", exist_ok=True)
-                                nombre_archivo = f"capa_{capa_sel}_procesada.parquet"
-                                ruta_salida = os.path.join("datos_web", nombre_archivo)
-                                gdf_res.to_parquet(ruta_salida)
-                                
+                                gdf_res.to_parquet(os.path.join("datos_web", f"capa_{capa_sel}_procesada.parquet"))
                                 st.cache_data.clear()
-                                st.success(f"✅ ¡Capa {capa_sel} procesada exitosamente!")
-                                st.info(f"Guardado en: {ruta_salida}")
+                                st.success("✅ ¡Capa procesada exitosamente!")
                             else: st.error(msg)
-                    except Exception as e: st.error(f"Error crítico: {e}")
-            else: st.warning("Por favor sube al menos el archivo ZIP.")
+                    except Exception as e: st.error(f"Error: {e}")
+            else: st.warning("Sube el ZIP.")
     st.stop()
 
 # ==============================================================================
@@ -238,17 +220,16 @@ def cargar_datos():
 
 df_total, cuenca = cargar_datos()
 if df_total is None:
-    st.info("⚠️ No hay datos cargados. Sube capas en el panel de Administrador.")
+    st.info("⚠️ No hay datos cargados.")
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (FIX MAPA + DATOS)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (KPIs FULL + MAPA GRANDE)
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
-    """
-    Genera el HTML con iframe para el mapa y datos corregidos.
-    """
-    # 1. Cálculos de KPIs con nombres originales
+    # 1. Cálculos de TODOS los KPIs
+    m_cnf = df_raw['MONTO_CNF'].sum() if 'MONTO_CNF' in df_raw.columns else 0
+    m_pi = df_raw['MONTO_PI'].sum() if 'MONTO_PI' in df_raw.columns else 0
     m_tot = df_raw['MONTO_TOT'].sum() if 'MONTO_TOT' in df_raw.columns else 0
     s_tot = df_raw['SUPERFICIE'].sum() if 'SUPERFICIE' in df_raw.columns else 0
     n_proy = len(df_raw)
@@ -266,7 +247,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS
+    # 4. CSS Ajustado (Mapa Alto y Grid de KPIs)
     css = f"""
     <style>
         body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
@@ -274,17 +255,30 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         .header {{ border-bottom: 4px solid {COLOR_ACENTO}; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
         .titulo {{ font-size: 28px; font-weight: bold; color: {COLOR_SECUNDARIO}; margin: 0; }}
         .subtitulo {{ font-size: 16px; color: {COLOR_PRIMARIO}; font-weight: bold; }}
-        .kpi-row {{ display: flex; gap: 20px; margin-bottom: 20px; }}
-        .kpi-card {{ flex: 1; background: #f4f4f4; padding: 15px; border-left: 6px solid {COLOR_PRIMARIO}; text-align: center; }}
-        .kpi-val {{ font-size: 24px; font-weight: bold; color: {COLOR_PRIMARIO}; display: block; }}
-        .kpi-lbl {{ font-size: 12px; text-transform: uppercase; color: #666; }}
-        .map-container {{ width: 100%; height: 500px; border: 1px solid #ccc; margin-bottom: 20px; }}
+        
+        /* KPIs GRID */
+        .kpi-section {{ margin-bottom: 20px; }}
+        .kpi-row-top {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }}
+        .kpi-row-bot {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }}
+        
+        .kpi-card {{ background: #f4f4f4; padding: 12px; border-left: 6px solid {COLOR_PRIMARIO}; text-align: center; border-radius: 4px; }}
+        .kpi-val {{ font-size: 20px; font-weight: bold; color: {COLOR_PRIMARIO}; display: block; }}
+        .kpi-val-tot {{ font-size: 22px; font-weight: bold; color: {COLOR_SECUNDARIO}; display: block; }}
+        .kpi-lbl {{ font-size: 11px; text-transform: uppercase; color: #666; font-weight: 600; }}
+        
+        /* Mapa Grande */
+        .map-container {{ width: 100%; height: 800px; border: 1px solid #ccc; margin-bottom: 10px; }}
+        
+        /* Gráficos */
         .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
         .chart-full {{ width: 100%; margin-bottom: 20px; }}
-        table {{ width: 100%; border-collapse: collapse; font-size: 10px; }}
+        
+        /* Tabla */
+        table {{ width: 100%; border-collapse: collapse; font-size: 9px; }}
         th {{ background-color: {COLOR_PRIMARIO}; color: white; padding: 5px; text-align: left; }}
-        td {{ border-bottom: 1px solid #ddd; padding: 5px; }}
+        td {{ border-bottom: 1px solid #ddd; padding: 4px; }}
         tr:nth-child(even) {{ background-color: #f9f9f9; }}
+        
         @media print {{ .no-print {{ display: none; }} body {{ -webkit-print-color-adjust: exact; }} }}
     </style>
     """
@@ -298,25 +292,29 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     <body>
         <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; z-index: 9999;">
             <button onclick="window.print()" style="background: {COLOR_PRIMARIO}; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer;">🖨️ IMPRIMIR A PDF</button>
-            <div style="font-size: 10px; color: #666; margin-top: 5px;">* Activa "Gráficos de fondo" en opciones de impresión</div>
         </div>
 
         <div class="header">
             <div>
                 <div class="titulo">REPORTE INTEGRAL DE PROYECTOS</div>
                 <div class="subtitulo">CUENCA LERMA-SANTIAGO | CONAFOR</div>
-                <div style="font-size: 12px; margin-top: 5px;">Generado el: {fecha}</div>
+                <div style="font-size: 12px; margin-top: 5px;">Corte al: {fecha}</div>
             </div>
             {logo_img}
         </div>
 
-        <div class="kpi-row">
-            <div class="kpi-card"><span class="kpi-lbl">Inversión Total</span><span class="kpi-val">${m_tot:,.2f}</span></div>
-            <div class="kpi-card"><span class="kpi-lbl">Superficie</span><span class="kpi-val">{s_tot:,.2f} ha</span></div>
-            <div class="kpi-card"><span class="kpi-lbl">Proyectos</span><span class="kpi-val">{n_proy}</span></div>
+        <div class="kpi-section">
+            <div class="kpi-row-top">
+                <div class="kpi-card"><span class="kpi-lbl">Aportación CONAFOR</span><span class="kpi-val">${m_cnf:,.2f}</span></div>
+                <div class="kpi-card"><span class="kpi-lbl">Aportación Socios</span><span class="kpi-val">${m_pi:,.2f}</span></div>
+                <div class="kpi-card" style="border-color: {COLOR_SECUNDARIO};"><span class="kpi-lbl">INVERSIÓN TOTAL</span><span class="kpi-val-tot">${m_tot:,.2f}</span></div>
+            </div>
+            <div class="kpi-row-bot">
+                <div class="kpi-card"><span class="kpi-lbl">Superficie Total</span><span class="kpi-val">{s_tot:,.2f} ha</span></div>
+                <div class="kpi-card"><span class="kpi-lbl">Total Proyectos</span><span class="kpi-val">{n_proy}</span></div>
+            </div>
         </div>
 
-        <h3>📍 Ubicación Geográfica</h3>
         <div class="map-container">
             <iframe srcdoc="{map_srcdoc}" width="100%" height="100%" frameborder="0" style="border:0;"></iframe>
         </div>
@@ -443,7 +441,7 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=550, returned_objects=[])
 
-# --- 3. TARJETAS KPI ---
+# --- 3. TARJETAS KPI (PANTALLA) ---
 with col_der:
     monto_cnf = df_filtrado['MONTO_CNF'].sum()
     monto_pi = df_filtrado['MONTO_PI'].sum()
@@ -478,7 +476,7 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📊 GRÁFICOS PARA REPORTE
+# 📊 GRÁFICOS (REPORTE)
 # ==============================================================================
 figs_reporte = {}
 if not df_filtrado.empty:
