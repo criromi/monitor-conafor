@@ -85,19 +85,19 @@ st.markdown(f"""
        CSS MÁGICO PARA TARJETAS DE GRÁFICOS (FIX)
        ========================================================================== */
     /* Busca cualquier bloque vertical de Streamlit que contenga nuestra 'marca' (.chart-card) */
-    [data-testid="stVerticalBlock"] > div:has(div.chart-card) {
+    [data-testid="stVerticalBlock"] > div:has(div.chart-card) {{
         background-color: white;
         border: 1px solid #e6e9ef;
         border-radius: 10px;
         padding: 15px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         margin-bottom: 20px;
-    }
+    }}
     
     /* La marca invisible */
-    .chart-card {
+    .chart-card {{
         display: none; 
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -261,7 +261,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS DISEÑO PROFESIONAL
+    # 4. CSS DISEÑO PROFESIONAL (DOBLES LLAVES PARA CSS, UNA LLAVE PARA VARIABLES)
     css = f"""
     <style>
         @page {{ size: letter portrait; margin: 1cm; }}
@@ -583,7 +583,7 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📊 GRÁFICOS PARA REPORTE (ALTURA AJUSTADA PARA TARJETAS)
+# 📊 GRÁFICOS PARA REPORTE
 # ==============================================================================
 figs_reporte = {}
 if not df_filtrado.empty:
