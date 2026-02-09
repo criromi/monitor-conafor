@@ -5,7 +5,7 @@ import folium
 from streamlit_folium import st_folium
 import os
 import plotly.express as px
-import plotly.graph_objects as go 
+import plotly.graph_objects as go # <--- NUEVO IMPORT NECESARIO PARA EL FIX
 from branca.element import MacroElement, Template
 import base64
 from io import BytesIO
@@ -272,9 +272,9 @@ def cargar_datos():
         gdf = gpd.read_parquet(ruta_master) if os.path.exists(ruta_master) else None
 
     if gdf is not None:
-        for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT', 'GERENCIA']:
+        for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT']:
             if c in gdf.columns: gdf[c] = gdf[c].astype(str)
-        for col in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE', 'ANIO']:
+        for col in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE']:
             if col not in gdf.columns: gdf[col] = 0.0
             else: gdf[col] = pd.to_numeric(gdf[col], errors='coerce').fillna(0)
 
@@ -328,19 +328,18 @@ with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
     if not df_filtrado.empty:
-        # Descarga Rápida en Sidebar (Mantenemos por si acaso, pero la tabla tiene la suya mejorada)
         nombres = {'FOL_PROG':'FOLIO', 'MONTO_TOT':'INVERSIÓN', 'TIPO_CAPA':'CATEGORÍA', col_sup:'SUPERFICIE'}
         df_ex = df_filtrado.drop(columns='geometry', errors='ignore').rename(columns=nombres)
         buff = BytesIO()
         with pd.ExcelWriter(buff, engine='xlsxwriter') as w: df_ex.to_excel(w, index=False)
-        st.download_button("📊 Reporte Rápido (Excel)", buff.getvalue(), "Datos_CONAFOR.xlsx", "application/vnd.ms-excel", use_container_width=True)
+        st.download_button("📊 Descargar Tabla (Excel)", buff.getvalue(), "Datos_CONAFOR.xlsx", "application/vnd.ms-excel", use_container_width=True)
         try:
             with tempfile.TemporaryDirectory() as td:
                 df_filtrado.to_file(os.path.join(td, "Proy.shp"))
                 bz = BytesIO()
                 with zipfile.ZipFile(bz, 'w', zipfile.ZIP_DEFLATED) as z:
                     for f in os.listdir(td): z.write(os.path.join(td, f), f)
-                st.download_button("🌍 Capa Geográfica (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
+                st.download_button("🌍 Descargar Capa (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
         except: pass
 
 # 2. MAPA (CENTRO)
@@ -451,16 +450,20 @@ with col_der:
     if not df_filtrado.empty:
         st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
         
+        # --- SOLUCIÓN BLINDADA (Graph Objects) ---
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
+        
+        # Generar lista de colores manualmente
         colores_barras = [CATALOGO_CAPAS.get(c, {}).get('color_chart', '#808080') for c in d['TIPO_CAPA']]
         
+        # Usamos go.Figure en lugar de px.bar para evitar validaciones fallidas
         fig_go = go.Figure(data=[go.Bar(
             x=d['TIPO_CAPA'],
             y=d['MONTO_TOT'],
             text=d['MONTO_TOT'],
             texttemplate='%{text:.2s}',
             textposition='auto',
-            marker_color=colores_barras 
+            marker_color=colores_barras # Asignación directa sin mapeos
         )])
         
         fig_go.update_layout(
@@ -473,6 +476,7 @@ with col_der:
             showlegend=False
         )
         st.plotly_chart(fig_go, use_container_width=True, config={'displayModeBar': False})
+        # ------------------------------------------
 
         if 'TIPO_PROP' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
@@ -483,68 +487,5 @@ with col_der:
             f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), legend=dict(orientation="h"))
             st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
 
-# ==============================================================================
-# 📑 TABLA DE DETALLE (DISEÑO EJECUTIVO)
-# ==============================================================================
-st.markdown("---")
-col_titulo, col_descarga = st.columns([4, 1])
-
-with col_titulo:
-    st.subheader("📑 Relación Detallada de Apoyos")
-
-# 1. DICCIONARIO DE ALIAS (Traductor Interno -> Ejecutivo)
-CONFIG_COLUMNAS = {
-    "FOL_PROG": "FOLIO",
-    "ESTADO": "ESTADO",
-    "MUNICIPIO": "MUNICIPIO",
-    "SOLICITANT": "BENEFICIARIO",
-    "TIPO_PROP": "TIPO DE PROPIEDAD",
-    "CONCEPTO": "CONCEPTO",
-    "SUPERFICIE": "SUPERFICIE",
-    "MONTO_CNF": "MONTO CONAFOR",
-    "MONTO_PI": "MONTO CONTRAPARTE",
-    "MONTO_TOT": "MONTO TOTAL",
-    "ANIO": "EJERCICIO",
-    "GERENCIA": "GERENCIA"
-}
-
-# 2. FILTRADO Y RENOMBRAMIENTO INTELIGENTE
-cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
-df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
-
-# 3. VISUALIZACIÓN DE ALTO NIVEL
-with st.container():
-    st.dataframe(
-        df_tabla,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "FOLIO": st.column_config.TextColumn("FOLIO", width="small"),
-            "BENEFICIARIO": st.column_config.TextColumn("BENEFICIARIO", width="large"),
-            "SUPERFICIE": st.column_config.NumberColumn("SUPERFICIE (Ha)", format="%.2f ha"),
-            "MONTO CONAFOR": st.column_config.NumberColumn("MONTO CONAFOR", format="$ %.2f"),
-            "MONTO CONTRAPARTE": st.column_config.NumberColumn("MONTO CONTRAPARTE", format="$ %.2f"),
-            "MONTO TOTAL": st.column_config.NumberColumn("MONTO TOTAL", format="$ %.2f"),
-            "EJERCICIO": st.column_config.NumberColumn("EJERCICIO", format="%d"),
-        }
-    )
-
-# 4. BOTÓN DE DESCARGA EXCEL MEJORADO
-def generar_excel_ejecutivo(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Reporte_Cuenca')
-        # Ajuste de ancho de columnas
-        worksheet = writer.sheets['Reporte_Cuenca']
-        for i, col in enumerate(df.columns):
-            worksheet.set_column(i, i, 20)
-    return output.getvalue()
-
-with col_descarga:
-    st.download_button(
-        label="📥 Descargar Excel",
-        data=generar_excel_ejecutivo(df_tabla),
-        file_name=f"Reporte_Cuenca_{datetime.now().strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
+with st.expander("📋 Ver Base de Datos Completa"):
+    st.dataframe(df_filtrado.drop(columns='geometry', errors='ignore'), use_container_width=True)
