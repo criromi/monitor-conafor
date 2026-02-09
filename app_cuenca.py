@@ -42,7 +42,7 @@ CATALOGO_CAPAS = {
 }
 
 # ==============================================================================
-# 🎨 ESTILOS CSS
+# 🎨 ESTILOS CSS (INTERFAZ WEB)
 # ==============================================================================
 st.markdown(f"""
     <style>
@@ -224,7 +224,7 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (KPIs FULL + MAPA GRANDE)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (DISEÑO PROFESIONAL)
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 1. Cálculos de TODOS los KPIs
@@ -247,91 +247,186 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS Ajustado (Mapa Alto y Grid de KPIs)
+    # 4. CSS DISEÑO PROFESIONAL (HOJA CARTA)
     css = f"""
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
+        @page {{ size: letter portrait; margin: 1cm; }} /* Configuración Hoja Carta */
+        body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; color: #333; background: #fff; }}
         .page-break {{ page-break-before: always; }}
-        .header {{ border-bottom: 4px solid {COLOR_ACENTO}; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
-        .titulo {{ font-size: 28px; font-weight: bold; color: {COLOR_SECUNDARIO}; margin: 0; }}
-        .subtitulo {{ font-size: 16px; color: {COLOR_PRIMARIO}; font-weight: bold; }}
+        .no-print {{ display: none; }}
+
+        /* HEADER */
+        .header {{ border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }}
+        .titulo {{ font-size: 32px; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 0; text-transform: uppercase; letter-spacing: 1px; }}
+        .subtitulo {{ font-size: 18px; color: {COLOR_PRIMARIO}; font-weight: 600; margin-top: 5px; }}
+        .meta-info {{ font-size: 12px; color: #666; margin-top: 10px; }}
         
-        /* KPIs GRID */
-        .kpi-section {{ margin-bottom: 20px; }}
-        .kpi-row-top {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }}
-        .kpi-row-bot {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }}
+        /* KPIs IMPACTANTES */
+        .kpi-section {{ margin-bottom: 30px; }}
+        .kpi-grid-top {{ display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 20px; margin-bottom: 20px; }}
+        .kpi-grid-bot {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
         
-        .kpi-card {{ background: #f4f4f4; padding: 12px; border-left: 6px solid {COLOR_PRIMARIO}; text-align: center; border-radius: 4px; }}
-        .kpi-val {{ font-size: 20px; font-weight: bold; color: {COLOR_PRIMARIO}; display: block; }}
-        .kpi-val-tot {{ font-size: 22px; font-weight: bold; color: {COLOR_SECUNDARIO}; display: block; }}
-        .kpi-lbl {{ font-size: 11px; text-transform: uppercase; color: #666; font-weight: 600; }}
+        .kpi-card {{
+            background: #fff;
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08); /* Sombra suave profesional */
+            text-align: center;
+            border-bottom: 5px solid {COLOR_PRIMARIO}; /* Acento inferior */
+            transition: all 0.3s ease;
+        }}
         
-        /* Mapa Grande */
-        .map-container {{ width: 100%; height: 800px; border: 1px solid #ccc; margin-bottom: 10px; }}
+        /* Tarjeta Destacada (Total) */
+        .kpi-card.highlight {{
+            background: {COLOR_PRIMARIO};
+            border-bottom-color: {COLOR_ACENTO};
+        }}
+        .kpi-card.highlight .kpi-lbl, .kpi-card.highlight .kpi-val {{ color: #fff !important; }}
+
+        .kpi-val {{ font-size: 26px; font-weight: 800; color: {COLOR_PRIMARIO}; display: block; margin-bottom: 5px; }}
+        .kpi-lbl {{ font-size: 13px; text-transform: uppercase; color: #777; font-weight: 700; letter-spacing: 0.5px; }}
         
-        /* Gráficos */
-        .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
-        .chart-full {{ width: 100%; margin-bottom: 20px; }}
+        /* MAPA GRANDE Y CENTRADO (Ocupa el espacio restante) */
+        .map-wrapper {{
+            width: 100%;
+            height: 65vh; /* Ocupa el 65% de la altura de la página, llenando el espacio */
+            min-height: 600px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }}
+        .map-wrapper iframe {{ width: 100%; height: 100%; border: none; }}
+
+        /* GRÁFICOS DISTRIBUIDOS (Hoja 2) */
+        .section-title {{ font-size: 24px; font-weight: bold; color: {COLOR_PRIMARIO}; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }}
         
-        /* Tabla */
-        table {{ width: 100%; border-collapse: collapse; font-size: 9px; }}
-        th {{ background-color: {COLOR_PRIMARIO}; color: white; padding: 5px; text-align: left; }}
-        td {{ border-bottom: 1px solid #ddd; padding: 4px; }}
-        tr:nth-child(even) {{ background-color: #f9f9f9; }}
+        .chart-container-full {{
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 30px; /* Espacio entre gráficos */
+        }}
         
-        @media print {{ .no-print {{ display: none; }} body {{ -webkit-print-color-adjust: exact; }} }}
+        .chart-grid-2up {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px; /* Espacio amplio entre columnas */
+            margin-bottom: 30px;
+        }}
+        
+        .chart-item {{
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            height: 380px; /* Altura fija para uniformidad */
+            display: flex; align-items: center; justify-content: center;
+        }}
+
+        /* TABLA */
+        table {{ width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }}
+        th {{ background-color: {COLOR_PRIMARIO}; color: white; padding: 10px; text-align: left; font-weight: 600; }}
+        td {{ border-bottom: 1px solid #eee; padding: 8px; }}
+        tr:nth-child(even) {{ background-color: #f8f9fa; }}
+        
+        /* Botón flotante solo para pantalla */
+        @media screen {
+            .floating-print-btn {
+                position: fixed; top: 20px; right: 20px; z-index: 9999;
+                background: {COLOR_PRIMARIO}; color: white; border: none;
+                padding: 12px 25px; font-weight: bold; border-radius: 30px;
+                cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                transition: background 0.2s;
+            }
+            .floating-print-btn:hover { background: {COLOR_SECUNDARIO}; }
+        }
     </style>
     """
     
-    logo_img = f'<img src="data:image/png;base64,{logo_b64}" height="60">' if logo_b64 else ''
+    logo_img = f'<img src="data:image/png;base64,{logo_b64}" height="70">' if logo_b64 else ''
     
     html = f"""
     <!DOCTYPE html>
-    <html>
-    <head>{css}</head>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Reporte CONAFOR</title>
+        {css}
+    </head>
     <body>
-        <div class="no-print" style="position: fixed; top: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; z-index: 9999;">
-            <button onclick="window.print()" style="background: {COLOR_PRIMARIO}; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer;">🖨️ IMPRIMIR A PDF</button>
-        </div>
+        <button class="floating-print-btn no-print" onclick="window.print()">🖨️ IMPRIMIR REPORTE PDF</button>
 
         <div class="header">
             <div>
-                <div class="titulo">REPORTE INTEGRAL DE PROYECTOS</div>
+                <div class="titulo">REPORTE EJECUTIVO DE PROYECTOS</div>
                 <div class="subtitulo">CUENCA LERMA-SANTIAGO | CONAFOR</div>
-                <div style="font-size: 12px; margin-top: 5px;">Corte al: {fecha}</div>
+                <div class="meta-info">Fecha de corte: {fecha}</div>
             </div>
             {logo_img}
         </div>
 
         <div class="kpi-section">
-            <div class="kpi-row-top">
-                <div class="kpi-card"><span class="kpi-lbl">Aportación CONAFOR</span><span class="kpi-val">${m_cnf:,.2f}</span></div>
-                <div class="kpi-card"><span class="kpi-lbl">Aportación Socios</span><span class="kpi-val">${m_pi:,.2f}</span></div>
-                <div class="kpi-card" style="border-color: {COLOR_SECUNDARIO};"><span class="kpi-lbl">INVERSIÓN TOTAL</span><span class="kpi-val-tot">${m_tot:,.2f}</span></div>
+            <div class="kpi-grid-top">
+                <div class="kpi-card">
+                    <span class="kpi-lbl">Aportación CONAFOR</span>
+                    <span class="kpi-val">${m_cnf:,.2f}</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-lbl">Aportación Socios</span>
+                    <span class="kpi-val">${m_pi:,.2f}</span>
+                </div>
+                <div class="kpi-card highlight">
+                    <span class="kpi-lbl">INVERSIÓN TOTAL EJERCIDA</span>
+                    <span class="kpi-val" style="font-size: 32px;">${m_tot:,.2f}</span>
+                </div>
             </div>
-            <div class="kpi-row-bot">
-                <div class="kpi-card"><span class="kpi-lbl">Superficie Total</span><span class="kpi-val">{s_tot:,.2f} ha</span></div>
-                <div class="kpi-card"><span class="kpi-lbl">Total Proyectos</span><span class="kpi-val">{n_proy}</span></div>
+            <div class="kpi-grid-bot">
+                <div class="kpi-card" style="border-bottom-color: {COLOR_SECUNDARIO};">
+                    <span class="kpi-lbl">Superficie Total Apoyada</span>
+                    <span class="kpi-val">{s_tot:,.2f} ha</span>
+                </div>
+                <div class="kpi-card" style="border-bottom-color: {COLOR_SECUNDARIO};">
+                    <span class="kpi-lbl">Total de Proyectos</span>
+                    <span class="kpi-val">{n_proy}</span>
+                </div>
             </div>
         </div>
 
-        <div class="map-container">
-            <iframe srcdoc="{map_srcdoc}" width="100%" height="100%" frameborder="0" style="border:0;"></iframe>
+        <div class="section-title">📍 Ubicación Geográfica de Proyectos</div>
+        <div class="map-wrapper">
+            <iframe srcdoc="{map_srcdoc}"></iframe>
         </div>
         
         <div class="page-break"></div>
-        <div class="header"><div class="titulo">ANÁLISIS ESTADÍSTICO</div>{logo_img}</div>
-        <div class="chart-full">{figuras_html.get('linea', '')}</div>
-        <div class="chart-grid">
-            <div>{figuras_html.get('barras', '')}</div>
-            <div>{figuras_html.get('muni', '')}</div>
-            <div>{figuras_html.get('pastel', '')}</div>
-            <div>{figuras_html.get('concepto', '')}</div>
+        <div class="header">
+            <div class="titulo">ANÁLISIS ESTADÍSTICO</div>
+            {logo_img}
+        </div>
+        
+        <div class="chart-container-full">
+            {figuras_html.get('linea', '')}
+        </div>
+        
+        <div class="chart-grid-2up">
+            <div class="chart-item">{figuras_html.get('barras', '')}</div>
+            <div class="chart-item">{figuras_html.get('muni', '')}</div>
+        </div>
+        <div class="chart-grid-2up">
+            <div class="chart-item">{figuras_html.get('pastel', '')}</div>
+            <div class="chart-item">{figuras_html.get('concepto', '')}</div>
         </div>
 
         <div class="page-break"></div>
-        <div class="header"><div class="titulo">DETALLE DE DATOS</div>{logo_img}</div>
-        {df_visual.to_html(index=False, border=0)}
+        <div class="header">
+            <div class="titulo">DETALLE DE DATOS</div>
+            {logo_img}
+        </div>
+        <div style="overflow-x: auto;">
+            {df_visual.to_html(index=False, border=0, classes='table')}
+        </div>
     </body>
     </html>
     """
@@ -392,7 +487,7 @@ with col_izq:
                (df_filtrado['MUNICIPIO'].str.upper().str.contains(busqueda, na=False))
         df_filtrado = df_filtrado[mask]
 
-# --- 2. MAPA ---
+# --- 2. MAPA (PANTALLA) ---
 with col_centro:
     try:
         if cuenca is not None:
@@ -476,37 +571,40 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📊 GRÁFICOS (REPORTE)
+# 📊 GRÁFICOS PARA REPORTE (ALTURA AJUSTADA PARA TARJETAS)
 # ==============================================================================
 figs_reporte = {}
 if not df_filtrado.empty:
+    # Altura estándar para los gráficos dentro de las tarjetas del reporte
+    REPORT_CHART_HEIGHT = 340
+
     d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
     d_anio = d_anio[d_anio['ANIO'] > 0]
-    fig_linea = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True, color_discrete_sequence=[COLOR_SECUNDARIO], labels={'MONTO_TOT': 'MONTO', 'ANIO': 'AÑO'}, title="Evolución Histórica")
-    fig_linea.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
-    fig_linea.update_layout(height=300, margin=dict(t=30,b=10))
+    fig_linea = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True, color_discrete_sequence=[COLOR_SECUNDARIO], labels={'MONTO_TOT': 'MONTO', 'ANIO': 'AÑO'}, title="Evolución Histórica de la Inversión")
+    fig_linea.update_traces(line=dict(width=4), marker=dict(size=10, color=COLOR_PRIMARIO))
+    fig_linea.update_layout(height=REPORT_CHART_HEIGHT, margin=dict(t=40,b=20,l=20,r=20), plot_bgcolor='rgba(0,0,0,0)')
     figs_reporte['linea'] = fig_linea.to_html(full_html=False, include_plotlyjs='cdn')
 
     d_prog = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
     colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d_prog['TIPO_CAPA']]
     fig_bar = go.Figure(data=[go.Bar(x=d_prog['TIPO_CAPA'], y=d_prog['MONTO_TOT'], text=d_prog['MONTO_TOT'], texttemplate='$%{text:.2s}', marker_color=colors)])
-    fig_bar.update_layout(title="Inversión por Programa", height=250, margin=dict(t=30,b=10))
+    fig_bar.update_layout(title="Inversión por Programa", height=REPORT_CHART_HEIGHT, margin=dict(t=40,b=20,l=20,r=20), plot_bgcolor='rgba(0,0,0,0)')
     figs_reporte['barras'] = fig_bar.to_html(full_html=False, include_plotlyjs='cdn')
 
     d_mun = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-    fig_mun = px.bar(d_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO], title="Top Municipios")
-    fig_mun.update_layout(height=250, margin=dict(t=30,b=10))
+    fig_mun = px.bar(d_mun, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO], title="Top 10 Municipios por Inversión")
+    fig_mun.update_layout(height=REPORT_CHART_HEIGHT, margin=dict(t=40,b=20,l=20,r=20), plot_bgcolor='rgba(0,0,0,0)')
     figs_reporte['muni'] = fig_mun.to_html(full_html=False, include_plotlyjs='cdn')
 
     d_reg = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-    fig_pie = px.pie(d_reg, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO], title="Régimen")
-    fig_pie.update_layout(height=250, margin=dict(t=30,b=10))
+    fig_pie = px.pie(d_reg, values='MONTO_TOT', names='TIPO_PROP', hole=0.6, color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO], title="Distribución por Régimen de Propiedad")
+    fig_pie.update_layout(height=REPORT_CHART_HEIGHT, margin=dict(t=40,b=20,l=20,r=20))
     figs_reporte['pastel'] = fig_pie.to_html(full_html=False, include_plotlyjs='cdn')
 
     d_con = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-    d_con['C'] = d_con['CONCEPTO'].apply(lambda x: x[:25]+'...' if len(x)>25 else x)
-    fig_con = px.bar(d_con, y='C', x='MONTO_TOT', orientation='h', color_discrete_sequence=[COLOR_SECUNDARIO], title="Conceptos")
-    fig_con.update_layout(height=250, margin=dict(t=30,b=10))
+    d_con['C'] = d_con['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
+    fig_con = px.bar(d_con, y='C', x='MONTO_TOT', orientation='h', color_discrete_sequence=[COLOR_SECUNDARIO], title="Top 10 Conceptos de Apoyo", text_auto='.2s')
+    fig_con.update_layout(height=REPORT_CHART_HEIGHT, margin=dict(t=40,b=20,l=20,r=20), plot_bgcolor='rgba(0,0,0,0)', yaxis_title=None)
     figs_reporte['concepto'] = fig_con.to_html(full_html=False, include_plotlyjs='cdn')
 
 # ==============================================================================
@@ -517,10 +615,10 @@ with col_head_btn:
     if not df_filtrado.empty:
         map_html = m.get_root().render()
         html_reporte = generar_reporte_completo_html(df_filtrado, map_html, figs_reporte, logo_b64)
-        st.download_button("🖨️", html_reporte, f"Reporte_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True)
+        st.download_button("🖨️", html_reporte, f"Reporte_CONAFOR_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True, help="Descargar Reporte Ejecutivo para Imprimir")
 
 # ==============================================================================
-# 📑 PESTAÑAS (UI)
+# 📑 PESTAÑAS (UI PANTALLA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
