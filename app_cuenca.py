@@ -359,20 +359,21 @@ tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATO
 # --- TAB 1: GRÁFICOS ---
 with tab_graficos:
     if not df_filtrado.empty:
-        # === NUEVO GRÁFICO: EVOLUCIÓN POR EJERCICIO ===
+        # === GRÁFICO DE LÍNEAS (Total por Ejercicio) ===
         if 'ANIO' in df_filtrado.columns:
             st.markdown('<div class="chart-title">Evolución de Inversión por Ejercicio</div>', unsafe_allow_html=True)
-            # Agrupar y ordenar por año
             d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
-            # Filtramos años 0 o inválidos
             d_anio = d_anio[d_anio['ANIO'] > 0]
             
-            fig = px.bar(d_anio, x='ANIO', y='MONTO_TOT', text_auto='.2s', 
-                         color_discrete_sequence=[COLOR_SECUNDARIO],
-                         labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
+            # Línea con marcadores y color institucional
+            fig = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True,
+                          color_discrete_sequence=[COLOR_SECUNDARIO],
+                          labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
+            
+            fig.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
             fig.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-        # ===============================================
+        # =================================================
 
         col_g1, col_g2 = st.columns(2)
         with col_g1:
