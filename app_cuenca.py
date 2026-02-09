@@ -26,69 +26,86 @@ st.set_page_config(layout="wide", page_title="Monitor CONAFOR", page_icon="🌲"
 COLOR_PRIMARIO = "#13322B"      # Verde Oscuro Gobierno
 COLOR_SECUNDARIO = "#9D2449"    # Guinda Institucional
 COLOR_ACENTO = "#DDC9A3"        # Dorado
+COLOR_FONDO = "#F5F5F5"
+
+# RUTA ABSOLUTA
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ==============================================================================
-# 📋 CATALOGO MAESTRO INTELIGENTE
+# 📋 CATALOGO MAESTRO
 # ==============================================================================
 CATALOGO_CAPAS = {
-    "PSA": {
-        "nombre": "Servicios Ambientales", 
-        "color_mapa": "#28a745",       
-        "color_chart": COLOR_PRIMARIO  
-    },
-    "PFC": {
-        "nombre": "Plantaciones Forestales", 
-        "color_mapa": "#ffc107",       
-        "color_chart": COLOR_SECUNDARIO 
-    },
-    "MFC": {
-        "nombre": "Manejo Forestal", 
-        "color_mapa": "#17a2b8",       
-        "color_chart": COLOR_ACENTO    
-    },
-    "CUSTF": { 
-        "nombre": "Compensación Ambiental", 
-        "color_mapa": "#ca520c",       
-        "color_chart": "#962121"       
-    }
+    "PSA": {"nombre": "Servicios Ambientales", "color_mapa": "#28a745", "color_chart": COLOR_PRIMARIO},
+    "PFC": {"nombre": "Plantaciones Forestales", "color_mapa": "#ffc107", "color_chart": COLOR_SECUNDARIO},
+    "MFC": {"nombre": "Manejo Forestal", "color_mapa": "#17a2b8", "color_chart": COLOR_ACENTO},
+    "CUSTF": {"nombre": "Compensación Ambiental", "color_mapa": "#ca520c", "color_chart": "#962121"}
 }
 
 # ==============================================================================
-# 🔐 SISTEMA DE SEGURIDAD
+# 🎨 ESTILOS CSS PERSONALIZADOS
+# ==============================================================================
+st.markdown(f"""
+    <style>
+    /* Estilo General */
+    .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
+    
+    /* Tarjetas de Métricas */
+    div[data-testid="metric-container"] {{
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 5px solid {COLOR_PRIMARIO};
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }}
+
+    /* Pestañas (Tabs) */
+    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
+    .stTabs [data-baseweb="tab"] {{
+        height: 50px; white-space: pre-wrap; background-color: white;
+        border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px;
+        border: 1px solid #ddd; border-bottom: none;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
+    }}
+
+    /* Títulos de Secciones */
+    .sub-header {{
+        color: {COLOR_PRIMARIO}; font-size: 1.2rem; font-weight: 800;
+        border-bottom: 2px solid {COLOR_ACENTO}; margin-bottom: 15px; padding-bottom: 5px;
+    }}
+    
+    /* Botones */
+    div.stButton > button {{
+        background-color: {COLOR_PRIMARIO} !important; color: white !important;
+        border-radius: 6px !important; font-weight: bold !important;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# 🔐 SISTEMA DE SEGURIDAD Y LOGIN (COMPLETO)
 # ==============================================================================
 if 'rol' not in st.session_state:
     st.session_state.rol = None
 
 if st.session_state.rol is None:
+    # Búsqueda robusta del logo
     ruta_logo = None
     posibles = ["logo 25 ani_conafor.png", "logo 25 ani_conafor.jpg", "logo 25 ani_conafor.jpeg"]
     for nombre in posibles:
-        path = os.path.join("logos", nombre)
+        path = os.path.join(BASE_DIR, "logos", nombre)
         if os.path.exists(path):
             ruta_logo = path
             break
-
-    st.markdown(f"""
-        <style>
-        header, footer {{visibility: hidden;}}
-        .stApp {{ background-color: #FFFF; }}
-        div[data-testid="column"]:nth-of-type(2) {{
-            background-color: white; padding: 2rem 3rem; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-top: 6px solid {COLOR_PRIMARIO};
-        }}
-        div.stButton > button {{
-            background-color: {COLOR_PRIMARIO} !important; color: white !important;
-            width: 100%; border-radius: 6px !important; font-weight: bold !important;
-            padding: 0.6rem !important;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
 
     col_izq, col_login, col_der = st.columns([1, 1, 1])
     with col_login:
         st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
         if ruta_logo: st.image(ruta_logo, use_container_width=True)
         else: st.markdown("<h1 style='text-align:center;'>🌲</h1>", unsafe_allow_html=True)
+            
         st.markdown(f"""
             <h2 style='text-align: center; color: {COLOR_SECUNDARIO}; font-size: 1.2rem; margin-bottom: 5px;'>MONITOR DE PROYECTOS</h2>
             <p style='text-align: center; color: {COLOR_PRIMARIO}; font-size: 2.2rem; margin-bottom: 5px;'>Cuenca Lerma-Santiago</p>
@@ -105,7 +122,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR
+# 🛠️ MODO ADMINISTRADOR (COMPLETO)
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -179,84 +196,17 @@ if modo_edicion_activo:
     st.stop()
 
 # ==============================================================================
-# 🚀 DASHBOARD
+# 📡 CARGA DE DATOS
 # ==============================================================================
-
-def get_img_as_base64_app(file_path):
-    try:
-        with open(file_path, "rb") as f: data = f.read()
-        return base64.b64encode(data).decode()
-    except Exception: return None
-
-logo_b64 = None
-ext_enc = ""
-for ext in [".png", ".jpg", ".jpeg"]:
-    path = os.path.join("logos", "logo 25 ani_conafor" + ext)
-    if os.path.exists(path):
-        logo_b64 = get_img_as_base64_app(path)
-        ext_enc = "png" if ext == ".png" else "jpeg"
-        break
-
-st.markdown(f"""
-    <style>
-    #MainMenu, footer {{visibility: hidden;}}
-    .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
-    
-    div[data-testid="column"]:nth-of-type(1) > div {{
-        background-color: white; border-radius: 12px; padding: 20px;
-        border: 1px solid #e0e0e0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); height: 100%;
-    }}
-    div[data-testid="column"]:nth-of-type(2) > div,
-    div[data-testid="column"]:nth-of-type(3) > div {{
-        background-color: white; border-radius: 12px; padding: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
-    }}
-    div[data-testid="stCheckbox"] label p {{
-        font-weight: 700 !important; font-size: 0.95rem !important; color: #333 !important;
-    }}
-    .section-header {{
-        color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
-        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1.1rem;
-    }}
-    .metric-container {{
-        background-color: #F8F9FA; border-radius: 8px; padding: 12px;
-        margin-bottom: 8px; text-align: center; border: 1px solid #eee;
-    }}
-    .metric-label {{ font-size: 0.85rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
-    .metric-value {{ font-size: 1.3rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 5px 0; }}
-    .metric-value-total {{ font-size: 1.6rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 5px 0; }}
-    .chart-title {{
-        font-size: 0.9rem; font-weight: bold; color: {COLOR_PRIMARIO};
-        text-align: center; margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px;
-    }}
-    iframe {{ width: 100% !important; border-radius: 8px; }}
-    </style>
-""", unsafe_allow_html=True)
-
-if logo_b64:
-    st.markdown(f"""
-    <div style="border-bottom: 4px solid {COLOR_ACENTO}; margin-bottom: 20px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h1 style='color: {COLOR_SECUNDARIO}; font-family: Arial, sans-serif; font-weight: 800; margin: 0; font-size: 2.2rem;'>
-                MONITOR DE PROYECTOS <span style='font-weight:300; color:{COLOR_PRIMARIO};'>| CUENCA LERMA-SANTIAGO</span>
-            </h1>
-            <div style='color: #756f6c; font-size: 1rem; margin-top:5px; font-weight: 600;'>
-                COMISIÓN NACIONAL FORESTAL <b style="color:#756f6c; font-size: 1.4rem;">(CONAFOR)</b>
-            </div>
-        </div>
-        <img src="data:image/{ext_enc};base64,{logo_b64}" style="height: 70px; width: auto;">
-    </div>
-    """, unsafe_allow_html=True)
-
 @st.cache_data(ttl=60) 
 def cargar_datos():
     carpeta_datos = 'datos_web'
-    ruta_cuenca = os.path.join(carpeta_datos, 'cuenca_web.parquet')
-    capas_a_cargar = list(CATALOGO_CAPAS.keys())
-    gdfs_lista = []
+    ruta_datos_abs = os.path.join(BASE_DIR, carpeta_datos)
+    ruta_cuenca = os.path.join(ruta_datos_abs, 'cuenca_web.parquet')
     
-    for capa in capas_a_cargar:
-        ruta = os.path.join(carpeta_datos, f"capa_{capa}_procesada.parquet")
+    gdfs_lista = []
+    for capa in CATALOGO_CAPAS.keys():
+        ruta = os.path.join(ruta_datos_abs, f"capa_{capa}_procesada.parquet")
         if os.path.exists(ruta):
             try:
                 g = gpd.read_parquet(ruta)
@@ -268,303 +218,243 @@ def cargar_datos():
     if gdfs_lista:
         gdf = pd.concat(gdfs_lista, ignore_index=True)
     else:
-        ruta_master = os.path.join(carpeta_datos, 'db_master.parquet')
+        ruta_master = os.path.join(ruta_datos_abs, 'db_master.parquet')
         gdf = gpd.read_parquet(ruta_master) if os.path.exists(ruta_master) else None
 
     if gdf is not None:
-        # 1. Normalización de Textos
+        # Normalización
         cols_text = ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT', 'GERENCIA']
         for c in cols_text:
             if c in gdf.columns: gdf[c] = gdf[c].astype(str)
         
-        # 2. FIX: Normalización INTELIGENTE de AÑO/EJERCICIO
-        # Busca si existe alguna columna parecida a ANIO, AÑO, EJERCICIO
-        col_anio = next((c for c in gdf.columns if c.upper() in ['ANIO', 'AÑO', 'EJERCICIO', 'YEAR']), None)
-        if col_anio:
-            # Si existe, renómbrala a 'ANIO' para estandarizar
-            gdf.rename(columns={col_anio: 'ANIO'}, inplace=True)
-        else:
-            # Si no existe, créala con un valor por defecto
-            gdf['ANIO'] = 0
+        # Detectar Año
+        col_anio = next((c for c in gdf.columns if any(x in c.upper() for x in ['ANIO', 'AÑO', 'EJERCICIO', 'YEAR'])), None)
+        if col_anio: gdf.rename(columns={col_anio: 'ANIO'}, inplace=True)
+        else: gdf['ANIO'] = 0
 
-        # 3. Normalización de Numéricos
+        # Numéricos
         for col in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE', 'ANIO']:
-            if col not in gdf.columns: 
-                gdf[col] = 0.0
-            else: 
-                # Convierte a numérico forzando errores a NaN y luego a 0
-                gdf[col] = pd.to_numeric(gdf[col], errors='coerce').fillna(0)
+            if col not in gdf.columns: gdf[col] = 0.0
+            else: gdf[col] = pd.to_numeric(gdf[col], errors='coerce').fillna(0)
 
     cuenca = gpd.read_parquet(ruta_cuenca) if os.path.exists(ruta_cuenca) else None
     return gdf, cuenca
 
 df_total, cuenca = cargar_datos()
 if df_total is None:
-    st.info("Sin datos cargados.")
+    st.info("⚠️ No hay datos cargados. Sube capas en el panel Admin.")
     st.stop()
 
-# --- LAYOUT ---
-col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
+# ==============================================================================
+# 🏁 HEADER & KPI SUPERIOR
+# ==============================================================================
+# Header con Logo
+def get_logo():
+    for ext in [".png", ".jpg", ".jpeg"]:
+        p = os.path.join(BASE_DIR, "logos", "logo 25 ani_conafor" + ext)
+        if os.path.exists(p):
+            with open(p, "rb") as f: return base64.b64encode(f.read()).decode(), "png" if ext==".png" else "jpeg"
+    return None, None
 
-# 1. FILTROS Y BUSQUEDA (IZQUIERDA)
-with col_izq:
-    # --- BUSCADOR INTELIGENTE ---
-    st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
-    # Actualizamos el texto de ayuda
-    busqueda = st.text_input("Buscar:", placeholder="Beneficiario, Folio o Municipio...", help="Escribe para filtrar")
-    
-    st.markdown('<div style="margin-top:15px;"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">🎛️ CAPAS DISPONIBLES</div>', unsafe_allow_html=True)
-    
+logo_b64, ext_enc = get_logo()
+if logo_b64:
+    header_html = f"""
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:4px solid {COLOR_ACENTO};">
+        <div>
+            <h1 style='color:{COLOR_SECUNDARIO}; font-size:2rem; margin:0;'>MONITOR DE PROYECTOS</h1>
+            <h3 style='color:{COLOR_PRIMARIO}; font-size:1.2rem; margin:0;'>CUENCA LERMA-SANTIAGO</h3>
+        </div>
+        <img src="data:image/{ext_enc};base64,{logo_b64}" style="height:60px;">
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
+
+# FILTROS
+col_filtro1, col_filtro2, col_filtro3 = st.columns([2, 1, 1])
+with col_filtro1:
+    busqueda = st.text_input("🔍 Buscar:", placeholder="Beneficiario, Folio o Municipio...")
+with col_filtro2:
+    st.write("") # Espacio
+    st.caption("Filtro por Capas:")
+with col_filtro3:
+    st.write("") # Espacio
     capas_activas = []
-    for codigo, info in CATALOGO_CAPAS.items():
-        if not df_total[df_total['TIPO_CAPA'] == codigo].empty:
-            if st.checkbox(info['nombre'], value=True, key=f"chk_{codigo}"):
-                capas_activas.append(codigo)
+    # Checkbox compactos
+    cols_chk = st.columns(len(CATALOGO_CAPAS))
+    for i, (cod, info) in enumerate(CATALOGO_CAPAS.items()):
+        if not df_total[df_total['TIPO_CAPA'] == cod].empty:
+            if cols_chk[i].checkbox(cod, value=True, help=info['nombre']):
+                capas_activas.append(cod)
 
-# --- LOGICA DE FILTRADO ---
+# LÓGICA DE FILTRADO
 df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
-
 if busqueda:
-    busqueda = busqueda.upper()
-    # FIX: AHORA BUSCA EN BENEFICIARIO (SOLICITANT), FOLIO O MUNICIPIO
-    mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(busqueda, na=False)) | \
-           (df_filtrado['FOL_PROG'].str.upper().str.contains(busqueda, na=False)) | \
-           (df_filtrado['MUNICIPIO'].str.upper().str.contains(busqueda, na=False))
+    b = busqueda.upper()
+    mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(b, na=False)) | \
+           (df_filtrado['FOL_PROG'].str.upper().str.contains(b, na=False)) | \
+           (df_filtrado['MUNICIPIO'].str.upper().str.contains(b, na=False))
     df_filtrado = df_filtrado[mask]
 
-df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
-valores_invalidos = ['nan', 'None', '', 'Sin Dato', 'NAN', 'null']
-
-monto_cnf = df_filtrado['MONTO_CNF'].sum()
-monto_pi = df_filtrado['MONTO_PI'].sum()
-monto_tot = df_filtrado['MONTO_TOT'].sum()
+# MÉTRICAS GLOBALES (BARRA SUPERIOR)
+m_tot = df_filtrado['MONTO_TOT'].sum()
+m_cnf = df_filtrado['MONTO_CNF'].sum()
 col_sup = next((c for c in df_filtrado.columns if c.upper() in ['SUPERFICIE', 'SUP_HA', 'HECTAREAS', 'HA']), None)
-sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
-num_proy = df_filtrado[~df_filtrado['FOL_PROG'].isin(valores_invalidos)]['FOL_PROG'].nunique()
+s_tot = df_filtrado[col_sup].sum() if col_sup else 0
+n_proy = df_filtrado['FOL_PROG'].nunique()
 
-# DESCARGAS
-with col_izq:
-    st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
-    if not df_filtrado.empty:
-        # Descarga Rápida en Sidebar
-        nombres = {'FOL_PROG':'FOLIO', 'MONTO_TOT':'INVERSIÓN', 'TIPO_CAPA':'CATEGORÍA', col_sup:'SUPERFICIE'}
-        df_ex = df_filtrado.drop(columns='geometry', errors='ignore').rename(columns=nombres)
-        buff = BytesIO()
-        with pd.ExcelWriter(buff, engine='xlsxwriter') as w: df_ex.to_excel(w, index=False)
-        st.download_button("📊 Reporte Rápido (Excel)", buff.getvalue(), "Datos_CONAFOR.xlsx", "application/vnd.ms-excel", use_container_width=True)
-        try:
-            with tempfile.TemporaryDirectory() as td:
-                df_filtrado.to_file(os.path.join(td, "Proy.shp"))
-                bz = BytesIO()
-                with zipfile.ZipFile(bz, 'w', zipfile.ZIP_DEFLATED) as z:
-                    for f in os.listdir(td): z.write(os.path.join(td, f), f)
-                st.download_button("🌍 Capa Geográfica (.zip SHP)", bz.getvalue(), "Capa_CONAFOR.zip", "application/zip", use_container_width=True)
-        except: pass
+st.markdown("<br>", unsafe_allow_html=True)
+k1, k2, k3, k4 = st.columns(4)
+k1.metric("INVERSIÓN TOTAL", f"${m_tot:,.0f}")
+k2.metric("APORTACIÓN CONAFOR", f"${m_cnf:,.0f}")
+k3.metric("SUPERFICIE (HA)", f"{s_tot:,.1f}")
+k4.metric("PROYECTOS", f"{n_proy}")
 
-# 2. MAPA (CENTRO)
-with col_centro:
+st.markdown("---")
+
+# ==============================================================================
+# 🗺️ SECCIÓN PRINCIPAL: MAPA
+# ==============================================================================
+col_mapa_main = st.container()
+
+with col_mapa_main:
+    # Centrado del Mapa
     try:
         if cuenca is not None and not busqueda:
             b = cuenca.total_bounds
             clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
         elif not df_filtrado.empty:
             b = df_filtrado.total_bounds
-            clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 8
-        else:
-            clat, clon, zoom = 20.5, -101.5, 7
+            clat, clon, zoom = (b[1]+b[3])/2, (b[0]+b[2])/2, 9
+        else: clat, clon, zoom = 20.5, -101.5, 7
     except: clat, clon, zoom = 20.5, -101.5, 7
-    
-    m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
-    
-    folium.TileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", attr="Google", name="Google Satélite", overlay=False, control=True).add_to(m)
-    folium.TileLayer("CartoDB positron", name="Mapa Claro", overlay=False, control=True).add_to(m)
-    
-    if cuenca is not None:
-        folium.GeoJson(cuenca, name="Cuenca", style_function=lambda x: {'fillColor':'none','color':'#555','weight':2,'dashArray':'5,5'}).add_to(m)
-        if not busqueda:
-             try:
-                bounds = cuenca.total_bounds
-                m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
-             except: pass
 
+    m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False)
+    folium.TileLayer("CartoDB positron", name="Mapa Base").add_to(m)
+    folium.TileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", attr="Google", name="Satélite").add_to(m)
+
+    # Capa Cuenca
+    if cuenca is not None:
+        folium.GeoJson(cuenca, style_function=lambda x: {'fillColor':'none','color':'#333','weight':2,'dashArray':'5,5'}).add_to(m)
+
+    # Capas Proyectos
     df_mapa = df_filtrado.copy()
-    if 'MONTO_TOT' in df_mapa.columns: df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
-    else: df_mapa['MONTO_FMT'] = "0.00"
+    df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: f"${x:,.2f}")
     
     campos = ['SOLICITANT','FOL_PROG', 'ESTADO', 'MUNICIPIO', 'TIPO_PROP', 'MONTO_FMT', 'CONCEPTO']
     alias = ['BENEFICIARIO: ', 'FOLIO: ', 'ESTADO: ', 'MUNICIPIO: ', 'REGIMEN: ', 'INVERSIÓN: ', 'CONCEPTO: ']
-    
+
     for cod in capas_activas:
         sub = df_mapa[df_mapa['TIPO_CAPA'] == cod]
         if not sub.empty:
-            c_mapa = CATALOGO_CAPAS.get(cod, {}).get("color_mapa", "blue")
+            color = CATALOGO_CAPAS.get(cod, {}).get("color_mapa", "blue")
             folium.GeoJson(
-                sub, name=CATALOGO_CAPAS[cod]['nombre'], smooth_factor=2.0,
-                style_function=lambda x, c=c_mapa: {'fillColor':c, 'color':'black', 'weight':0.4, 'fillOpacity':0.7},
-                tooltip=folium.GeoJsonTooltip(fields=campos, aliases=alias, style="background-color: white; color: #333; font-family: arial; font-size: 10px; padding: 8px;")
+                sub,
+                name=CATALOGO_CAPAS[cod]['nombre'],
+                style_function=lambda x, c=color: {'fillColor':c, 'color':'black', 'weight':0.5, 'fillOpacity':0.7},
+                tooltip=folium.GeoJsonTooltip(fields=campos, aliases=alias)
             ).add_to(m)
 
-    folium.LayerControl(position='topright', collapsed=True).add_to(m)
+    folium.LayerControl(collapsed=True).add_to(m)
+    st_folium(m, height=550, use_container_width=True)
 
-    ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
-    macro = MacroElement()
-    macro._template = Template(f"""
-    {{% macro html(this, kwargs) %}}
-    <div style="position: fixed; bottom: 30px; right: 30px; background:rgba(255,255,255,0.95); padding:10px; border-radius:5px; border:1px solid #ccc; z-index:999; font-size:11px; font-family:Arial; font-weight:bold;">
-        {ley_html}
-    </div>
-    {{% endmacro %}}""")
-    m.get_root().add_child(macro)
-    st_folium(m, width="100%", height=600, returned_objects=[])
+# ==============================================================================
+# 📑 SECCIÓN INFERIOR: PESTAÑAS (GRÁFICOS vs TABLA)
+# ==============================================================================
+st.markdown("<br>", unsafe_allow_html=True)
+
+tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
+
+# --- PESTAÑA 1: GRÁFICOS ---
+with tab_graficos:
+    st.markdown('<div class="sub-header">Análisis Estadístico</div>', unsafe_allow_html=True)
     
-    st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if 'MUNICIPIO' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
-            d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
-                       color_discrete_sequence=[COLOR_PRIMARIO],
-                       labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
-            f.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
-            st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
-    with c2:
-        if 'CONCEPTO' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
-            d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-            d['C'] = d['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
-            f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
-                       color_discrete_sequence=[COLOR_SECUNDARIO],
-                       labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
-            f.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
-            st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
-
-# 3. ESTADISTICAS
-with col_der:
-    st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="metric-container">
-        <div class="metric-label">CONAFOR vs PARTE INTERESADA</div>
-        <div class="metric-value">${monto_cnf:,.0f}</div>
-        <div style="font-size: 0.8rem; color: #666; font-weight:bold;">+ ${monto_pi:,.0f} (Part.)</div>
-    </div>
-    <div class="metric-container" style="border-left: 5px solid {COLOR_SECUNDARIO}; background:white;">
-        <div class="metric-label">TOTAL EJERCIDO</div>
-        <div class="metric-value-total">${monto_tot:,.0f}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="section-header" style="margin-top: 25px;">🌲 AVANCE FÍSICO</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="metric-container">
-        <div class="metric-label">Superficie Total</div>
-        <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
-    </div>
-    <div class="metric-container">
-        <div class="metric-label">PROYECTOS APOYADOS</div>
-        <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
-    </div>
-    """, unsafe_allow_html=True)
+    # Fila 1 de Gráficos
+    g_col1, g_col2 = st.columns(2)
     
-    if not df_filtrado.empty:
-        st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
-        
+    with g_col1:
+        st.write("**Inversión por Programa**")
         d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-        colores_barras = [CATALOGO_CAPAS.get(c, {}).get('color_chart', '#808080') for c in d['TIPO_CAPA']]
+        colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d['TIPO_CAPA']]
         
-        fig_go = go.Figure(data=[go.Bar(
-            x=d['TIPO_CAPA'],
-            y=d['MONTO_TOT'],
-            text=d['MONTO_TOT'],
-            texttemplate='%{text:.2s}',
-            textposition='auto',
-            marker_color=colores_barras 
+        fig = go.Figure(data=[go.Bar(
+            x=d['TIPO_CAPA'], y=d['MONTO_TOT'],
+            text=d['MONTO_TOT'], texttemplate='$%{text:.2s}', textposition='auto',
+            marker_color=colors
         )])
-        
-        fig_go.update_layout(
-            xaxis_title="PROGRAMA",
-            yaxis_title="MONTO TOTAL",
-            height=250,
-            margin=dict(t=10, b=10),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            showlegend=False
-        )
-        st.plotly_chart(fig_go, use_container_width=True, config={'displayModeBar': False})
+        fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig, use_container_width=True)
 
+    with g_col2:
+        if 'MUNICIPIO' in df_filtrado.columns:
+            st.write("**Top 10 Municipios (Inversión)**")
+            d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
+            fig = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', color_discrete_sequence=[COLOR_PRIMARIO])
+            fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, use_container_width=True)
+
+    # Fila 2 de Gráficos
+    g_col3, g_col4 = st.columns(2)
+    
+    with g_col3:
         if 'TIPO_PROP' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
+            st.write("**Tenencia de la Tierra**")
             d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-            f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
-                       color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
-                       labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
-            f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), legend=dict(orientation="h"))
-            st.plotly_chart(f, use_container_width=True, config={'displayModeBar': False})
+            fig = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.4, 
+                         color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO])
+            fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=300)
+            st.plotly_chart(fig, use_container_width=True)
+            
+    with g_col4:
+        if 'CONCEPTO' in df_filtrado.columns:
+            st.write("**Top Conceptos de Apoyo**")
+            d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(8, 'MONTO_TOT')
+            d['CONCEPTO'] = d['CONCEPTO'].apply(lambda x: x[:40]+"..." if len(x)>40 else x)
+            fig = px.bar(d, y='CONCEPTO', x='MONTO_TOT', orientation='h', color_discrete_sequence=[COLOR_SECUNDARIO])
+            fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=300, yaxis_title=None)
+            st.plotly_chart(fig, use_container_width=True)
 
-# ==============================================================================
-# 📑 TABLA DE DETALLE (DISEÑO EJECUTIVO)
-# ==============================================================================
-st.markdown("---")
-col_titulo, col_descarga = st.columns([4, 1])
+# --- PESTAÑA 2: TABLA ---
+with tab_tabla:
+    col_t1, col_t2 = st.columns([5, 1])
+    with col_t1:
+        st.markdown('<div class="sub-header">Relación de Apoyos</div>', unsafe_allow_html=True)
+    
+    # Configuración de Columnas para Tabla
+    CONFIG_COLS = {
+        "FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO",
+        "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO",
+        "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "AÑO"
+    }
+    
+    cols_ok = [c for c in CONFIG_COLS.keys() if c in df_filtrado.columns]
+    df_t = df_filtrado[cols_ok].rename(columns=CONFIG_COLS)
 
-with col_titulo:
-    st.subheader("📑 Relación Detallada de Apoyos")
+    # Botón Descarga
+    def to_excel(df):
+        out = BytesIO()
+        with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Reporte')
+            writer.sheets['Reporte'].set_column(0, len(df.columns), 20)
+        return out.getvalue()
 
-# 1. DICCIONARIO DE ALIAS (Traductor Interno -> Ejecutivo)
-CONFIG_COLUMNAS = {
-    "FOL_PROG": "FOLIO",
-    "ESTADO": "ESTADO",
-    "MUNICIPIO": "MUNICIPIO",
-    "SOLICITANT": "BENEFICIARIO",
-    "TIPO_PROP": "TIPO DE PROPIEDAD",
-    "CONCEPTO": "CONCEPTO",
-    "SUPERFICIE": "SUPERFICIE",
-    "MONTO_CNF": "MONTO CONAFOR",
-    "MONTO_PI": "MONTO CONTRAPARTE",
-    "MONTO_TOT": "MONTO TOTAL",
-    "ANIO": "EJERCICIO", # AQUI USAMOS EL NOMBRE NORMALIZADO 'ANIO'
-    "GERENCIA": "GERENCIA"
-}
+    with col_t2:
+        st.download_button(
+            "📥 Descargar Excel",
+            data=to_excel(df_t),
+            file_name="Reporte_Cuenca.xlsx",
+            mime="application/vnd.ms-excel",
+            use_container_width=True
+        )
 
-# 2. FILTRADO Y RENOMBRAMIENTO INTELIGENTE
-cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
-df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
-
-# 3. VISUALIZACIÓN DE ALTO NIVEL
-with st.container():
+    # Tabla Estilizada
     st.dataframe(
-        df_tabla,
+        df_t,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "FOLIO": st.column_config.TextColumn("FOLIO", width="small"),
-            "BENEFICIARIO": st.column_config.TextColumn("BENEFICIARIO", width="large"),
-            "SUPERFICIE": st.column_config.NumberColumn("SUPERFICIE (Ha)", format="%.2f ha"),
-            "MONTO CONAFOR": st.column_config.NumberColumn("MONTO CONAFOR", format="$ %.2f"),
-            "MONTO CONTRAPARTE": st.column_config.NumberColumn("MONTO CONTRAPARTE", format="$ %.2f"),
-            "MONTO TOTAL": st.column_config.NumberColumn("MONTO TOTAL", format="$ %.2f"),
-            "EJERCICIO": st.column_config.NumberColumn("EJERCICIO", format="%d"),
+            "TOTAL": st.column_config.NumberColumn(format="$ %.2f"),
+            "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"),
+            "AÑO": st.column_config.NumberColumn(format="%d"),
+            "BENEFICIARIO": st.column_config.TextColumn(width="large"),
         }
-    )
-
-# 4. BOTÓN DE DESCARGA EXCEL MEJORADO
-def generar_excel_ejecutivo(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Reporte_Cuenca')
-        # Ajuste de ancho de columnas
-        worksheet = writer.sheets['Reporte_Cuenca']
-        for i, col in enumerate(df.columns):
-            worksheet.set_column(i, i, 20)
-    return output.getvalue()
-
-with col_descarga:
-    st.download_button(
-        label="📥 Descargar Excel",
-        data=generar_excel_ejecutivo(df_tabla),
-        file_name=f"Reporte_Cuenca_{datetime.now().strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
     )
