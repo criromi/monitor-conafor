@@ -67,6 +67,10 @@ st.markdown(f"""
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1.1rem;
     }}
+    .chart-title {{
+        font-size: 0.9rem; font-weight: bold; color: {COLOR_PRIMARIO};
+        text-align: center; margin-top: 10px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px;
+    }}
     
     /* Métricas Derecha */
     .metric-container {{
@@ -134,7 +138,6 @@ if st.session_state.rol == "admin":
             st.rerun()
 
 if modo_edicion_activo:
-    # Código Admin (resumido para enfoque en diseño, usa backend_admin)
     st.title("🛠️ Gestión de Datos")
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -184,7 +187,6 @@ def cargar_datos():
         gdf = gpd.read_parquet(ruta_master) if os.path.exists(ruta_master) else None
 
     if gdf is not None:
-        # Normalización
         cols_text = ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT', 'GERENCIA']
         for c in cols_text:
             if c in gdf.columns: gdf[c] = gdf[c].astype(str)
@@ -206,7 +208,7 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏁 HEADER & KPI SUPERIOR
+# 🏁 HEADER
 # ==============================================================================
 def get_logo():
     for ext in [".png", ".jpg", ".jpeg"]:
@@ -232,11 +234,11 @@ if logo_b64:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 🧱 LAYOUT 3 COLUMNAS (DISEÑO ORIGINAL)
+# 🧱 LAYOUT 3 COLUMNAS
 # ==============================================================================
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
-# --- COLUMNA 1: FILTROS ---
+# --- 1. FILTROS ---
 with col_izq:
     st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
     busqueda = st.text_input("Buscar:", placeholder="Beneficiario, Folio o Municipio...", help="Escribe para filtrar")
@@ -250,7 +252,6 @@ with col_izq:
             if st.checkbox(info['nombre'], value=True, key=f"chk_{codigo}"):
                 capas_activas.append(codigo)
 
-    # LÓGICA DE FILTRADO
     df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
 
     if busqueda:
@@ -260,9 +261,8 @@ with col_izq:
                (df_filtrado['MUNICIPIO'].str.upper().str.contains(busqueda, na=False))
         df_filtrado = df_filtrado[mask]
 
-# --- COLUMNA 2: MAPA ---
+# --- 2. MAPA ---
 with col_centro:
-    # 1. CENTRADO DE MAPA (PRIORIDAD: CUENCA)
     try:
         if cuenca is not None:
             b = cuenca.total_bounds
@@ -275,28 +275,19 @@ with col_centro:
     except: clat, clon, zoom = 20.5, -101.5, 7
     
     m = folium.Map([clat, clon], zoom_start=zoom, tiles=None, zoom_control=False, prefer_canvas=True)
-    
     folium.TileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", attr="Google", name="Google Satélite", overlay=False, control=True).add_to(m)
     folium.TileLayer("CartoDB positron", name="Mapa Claro", overlay=False, control=True).add_to(m)
     
-    # 2. CAPA CUENCA
     if cuenca is not None:
         folium.GeoJson(
-            cuenca, 
-            name="Límite de Cuenca", 
-            style_function=lambda x: {
-                'fillColor': 'none',
-                'color': '#FFD700',  # Amarillo Dorado
-                'weight': 3,         
-                'dashArray': '10, 5' 
-            }
+            cuenca, name="Límite de Cuenca", 
+            style_function=lambda x: {'fillColor': 'none', 'color': '#FFD700', 'weight': 3, 'dashArray': '10, 5'}
         ).add_to(m)
         try:
             bounds = cuenca.total_bounds
             m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
         except: pass
 
-    # Capas de Proyectos
     df_mapa = df_filtrado.copy()
     if 'MONTO_TOT' in df_mapa.columns: df_mapa['MONTO_FMT'] = df_mapa['MONTO_TOT'].apply(lambda x: "{:,.2f}".format(x))
     else: df_mapa['MONTO_FMT'] = "0.00"
@@ -316,19 +307,16 @@ with col_centro:
 
     folium.LayerControl(position='topright', collapsed=True).add_to(m)
     
-    # Leyenda
     ley_html = "".join([f"<div style='margin-bottom:5px;'><i style='background:{CATALOGO_CAPAS[c]['color_mapa']}; width:10px; height:10px; display:inline-block; margin-right:5px;'></i>{CATALOGO_CAPAS[c]['nombre']}</div>" for c in capas_activas])
     macro = MacroElement()
-    macro._template = Template(f"""
-    {{% macro html(this, kwargs) %}}
+    macro._template = Template(f"""{{% macro html(this, kwargs) %}}
     <div style="position: fixed; bottom: 30px; right: 30px; background:rgba(255,255,255,0.95); padding:10px; border-radius:5px; border:1px solid #ccc; z-index:999; font-size:11px; font-family:Arial; font-weight:bold;">
         {ley_html}
-    </div>
-    {{% endmacro %}}""")
+    </div>{{% endmacro %}}""")
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=550, returned_objects=[])
 
-# --- COLUMNA 3: TARJETAS KPI (Diseño Original) ---
+# --- 3. TARJETAS KPI ---
 with col_der:
     monto_cnf = df_filtrado['MONTO_CNF'].sum()
     monto_pi = df_filtrado['MONTO_PI'].sum()
@@ -363,7 +351,7 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📑 PESTAÑAS INFERIORES (GRÁFICOS Y TABLA)
+# 📑 PESTAÑAS INFERIORES
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
@@ -371,6 +359,21 @@ tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATO
 # --- TAB 1: GRÁFICOS ---
 with tab_graficos:
     if not df_filtrado.empty:
+        # === NUEVO GRÁFICO: EVOLUCIÓN POR EJERCICIO ===
+        if 'ANIO' in df_filtrado.columns:
+            st.markdown('<div class="chart-title">Evolución de Inversión por Ejercicio</div>', unsafe_allow_html=True)
+            # Agrupar y ordenar por año
+            d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
+            # Filtramos años 0 o inválidos
+            d_anio = d_anio[d_anio['ANIO'] > 0]
+            
+            fig = px.bar(d_anio, x='ANIO', y='MONTO_TOT', text_auto='.2s', 
+                         color_discrete_sequence=[COLOR_SECUNDARIO],
+                         labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
+            fig.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        # ===============================================
+
         col_g1, col_g2 = st.columns(2)
         with col_g1:
             st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
@@ -383,7 +386,7 @@ with tab_graficos:
                 marker_color=colors
             )])
             fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=300, 
-                              margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                              margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig, use_container_width=True)
 
         with col_g2:
