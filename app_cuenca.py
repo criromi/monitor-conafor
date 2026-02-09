@@ -60,17 +60,15 @@ st.markdown(f"""
         color: {COLOR_PRIMARIO};
         background-color: #f8f9fa;
         border-radius: 8px;
+        border: 1px solid #eee;
     }}
 
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
         border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
     }}
-    .chart-title {{
-        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
-        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
-    }}
     
+    /* Métricas */
     .metric-container {{
         background-color: #F8F9FA; border-radius: 8px; padding: 10px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
@@ -82,6 +80,24 @@ st.markdown(f"""
         padding-top: 0px;
     }}
     div.stButton > button {{ width: 100%; }}
+
+    /* ==========================================================================
+       CSS MÁGICO PARA TARJETAS DE GRÁFICOS (FIX)
+       ========================================================================== */
+    /* Busca cualquier bloque vertical de Streamlit que contenga nuestra 'marca' (.chart-card) */
+    [data-testid="stVerticalBlock"] > div:has(div.chart-card) {
+        background-color: white;
+        border: 1px solid #e6e9ef;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    /* La marca invisible */
+    .chart-card {
+        display: none; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -222,7 +238,7 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (SINTAXIS CORREGIDA)
+# 🏗️ GENERADOR DE REPORTE COMPLETO
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 1. Cálculos de TODOS los KPIs
@@ -245,7 +261,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS DISEÑO PROFESIONAL (DOBLES LLAVES PARA ESCAPAR f-strings)
+    # 4. CSS DISEÑO PROFESIONAL
     css = f"""
     <style>
         @page {{ size: letter portrait; margin: 1cm; }}
@@ -571,7 +587,6 @@ with col_der:
 # ==============================================================================
 figs_reporte = {}
 if not df_filtrado.empty:
-    # Altura estándar para los gráficos dentro de las tarjetas del reporte
     REPORT_CHART_HEIGHT = 340
 
     d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
@@ -614,36 +629,17 @@ with col_head_btn:
         st.download_button("🖨️", html_reporte, f"Reporte_CONAFOR_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True, help="Descargar Reporte Ejecutivo para Imprimir")
 
 # ==============================================================================
-# 📑 SECCIÓN DE DETALLES (CORRECCIÓN DE RECUADROS)
+# 📑 SECCIÓN DE DETALLES (SOLUCIÓN DEFINITIVA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
-
-# CSS Mejorado: Forzamos el estilo de tarjeta para los contenedores de Streamlit
-st.markdown("""
-    <style>
-    /* Estilo para el contenedor que envuelve cada gráfico */
-    [data-testid="stVerticalBlock"] > div:has(div.plot-card) {
-        background-color: white;
-        border: 1px solid #e6e9ef;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }
-    .plot-card {
-        padding: 0px; /* Reset para no duplicar padding */
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # 1. EXPANDER: DETALLES Y GRÁFICOS
 with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=False):
     if not df_filtrado.empty:
         
         # --- Gráfico de Línea (Ancho Completo) ---
-        # Usamos un contenedor dedicado para aplicar el estilo
         with st.container():
-            st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
             st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
         
         # --- Fila de 3 gráficos ---
@@ -651,30 +647,52 @@ with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=Fals
         
         with c_g1: 
             with st.container():
-                st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
             
         with c_g2: 
             with st.container():
-                st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
                 st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
             
         with c_g3: 
             with st.container():
-                st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
                 st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
         
         # --- Gráfico de Conceptos (Ancho Completo) ---
         with st.container():
-            st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
             st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
 # 2. EXPANDER: TABLA DE DATOS
 with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=False):
     with st.container():
-        st.markdown('<div class="plot-card"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
         c_tit, c_btns = st.columns([5, 2])
         with c_tit: st.subheader("Base de Datos de Apoyos")
         
-        # Botones y Tabla aquí...
-        # [Mantén tu lógica de b1, b2 y st.dataframe aquí]
+        CONFIG_COLUMNAS = {"FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"}
+        cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
+        df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
+
+        def generar_excel(df):
+            out = BytesIO()
+            with pd.ExcelWriter(out, engine='xlsxwriter') as w: df.to_excel(w, index=False)
+            return out.getvalue()
+            
+        def generar_shp(gdf):
+            with tempfile.TemporaryDirectory() as td:
+                gdf.to_file(os.path.join(td, "Proyectos.shp"))
+                mem = BytesIO()
+                with zipfile.ZipFile(mem, 'w', zipfile.ZIP_DEFLATED) as z:
+                    for r, d, f in os.walk(td):
+                        for file in f: z.write(os.path.join(r, file), file)
+                return mem.getvalue()
+
+        with c_btns:
+            b1, b2 = st.columns(2)
+            with b1: st.download_button("📥 Excel", generar_excel(df_tabla), "Datos.xlsx", "application/vnd.ms-excel")
+            with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Mapa.zip", "application/zip")
+
+        st.dataframe(df_tabla, use_container_width=True, hide_index=True, column_config={"TOTAL": st.column_config.NumberColumn(format="$ %.2f"), "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"), "EJERCICIO": st.column_config.NumberColumn(format="%d")})
