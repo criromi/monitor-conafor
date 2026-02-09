@@ -224,7 +224,7 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (DISEÑO PROFESIONAL CORREGIDO)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (SINTAXIS CORREGIDA)
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 1. Cálculos de TODOS los KPIs
@@ -247,8 +247,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS DISEÑO PROFESIONAL (HOJA CARTA)
-    # NOTA: Usamos {{ y }} para escapar los corchetes de CSS dentro del f-string de Python
+    # 4. CSS DISEÑO PROFESIONAL (DOBLES LLAVES PARA ESCAPAR f-strings)
     css = f"""
     <style>
         @page {{ size: letter portrait; margin: 1cm; }}
@@ -277,11 +276,11 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
             transition: all 0.3s ease;
         }}
         
-        /* Tarjeta Destacada (Total) */
         .kpi-card.highlight {{
             background: {COLOR_PRIMARIO};
             border-bottom-color: {COLOR_ACENTO};
         }}
+        /* Nota: highlight usa color blanco forzado en etiquetas hijas */
         .kpi-card.highlight .kpi-lbl, .kpi-card.highlight .kpi-val {{ color: #fff !important; }}
 
         .kpi-val {{ font-size: 26px; font-weight: 800; color: {COLOR_PRIMARIO}; display: block; margin-bottom: 5px; }}
@@ -333,17 +332,15 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         td {{ border-bottom: 1px solid #eee; padding: 8px; }}
         tr:nth-child(even) {{ background-color: #f8f9fa; }}
         
-        /* Botón flotante solo para pantalla */
-        @media screen {{
-            .floating-print-btn {{
-                position: fixed; top: 20px; right: 20px; z-index: 9999;
-                background: {COLOR_PRIMARIO}; color: white; border: none;
-                padding: 12px 25px; font-weight: bold; border-radius: 30px;
-                cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                transition: background 0.2s;
-            }}
-            .floating-print-btn:hover {{ background: {COLOR_SECUNDARIO}; }}
+        /* Botón flotante */
+        .floating-print-btn {{
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            background: {COLOR_PRIMARIO}; color: white; border: none;
+            padding: 12px 25px; font-weight: bold; border-radius: 30px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: background 0.2s;
         }}
+        .floating-print-btn:hover {{ background: {COLOR_SECUNDARIO}; }}
     </style>
     """
     
