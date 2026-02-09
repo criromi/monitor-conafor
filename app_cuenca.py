@@ -42,73 +42,48 @@ CATALOGO_CAPAS = {
 }
 
 # ==============================================================================
-# 🎨 ESTILOS CSS (INTERFAZ WEB RENOVADA)
+# 🎨 ESTILOS CSS (INTERFAZ WEB)
 # ==============================================================================
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* Contenedor de columnas */
     div[data-testid="column"] {{
-        background-color: transparent; border: none; box-shadow: none; padding: 0px;
+        background-color: white; border-radius: 12px; padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     
-    /* TARJETAS KPI MODERNAS */
-    .kpi-card {{
-        background-color: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        border-left: 5px solid {COLOR_ACENTO};
-        margin-bottom: 15px;
-        transition: transform 0.2s;
+    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
+    .stTabs [data-baseweb="tab"] {{
+        height: 45px; white-space: pre-wrap; background-color: white;
+        border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 8px; padding-bottom: 8px;
+        border: 1px solid #ddd; border-bottom: none; font-size: 0.9rem;
     }}
-    .kpi-card:hover {{ transform: translateY(-2px); }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
+    }}
+
+    .section-header {{
+        color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
+        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
+    }}
+    .chart-title {{
+        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
+        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
+    }}
     
-    .kpi-card-highlight {{
-        background: linear-gradient(135deg, {COLOR_PRIMARIO} 0%, #1e4d43 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 6px 15px rgba(19, 50, 43, 0.3);
-        margin-bottom: 15px;
-        text-align: center;
+    .metric-container {{
+        background-color: #F8F9FA; border-radius: 8px; padding: 10px;
+        margin-bottom: 8px; text-align: center; border: 1px solid #eee;
     }}
-
-    .kpi-label {{
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 5px;
-    }}
-    .kpi-label-light {{ color: rgba(255,255,255,0.8); }}
-
-    .kpi-value {{
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: {COLOR_PRIMARIO};
-        margin: 0;
-    }}
-    .kpi-value-light {{ color: white; font-size: 1.8rem; }}
+    .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
+    .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     
-    .kpi-subtext {{
-        font-size: 0.85rem;
-        color: #888;
-        font-weight: 500;
+    div[data-testid="stVerticalBlock"] > div:first-child {{
+        padding-top: 0px;
     }}
-
-    /* Estilo para los Expanders */
-    .streamlit-expanderHeader {{
-        font-weight: bold;
-        color: {COLOR_PRIMARIO};
-        background-color: white !important;
-        border-radius: 10px !important;
-        border: 1px solid #eee !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }}
+    div.stButton > button {{ width: 100%; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -559,7 +534,7 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=550, returned_objects=[])
 
-# --- 3. TARJETAS KPI (DISEÑO PROFESIONAL) ---
+# --- 3. TARJETAS KPI (PANTALLA) ---
 with col_der:
     monto_cnf = df_filtrado['MONTO_CNF'].sum()
     monto_pi = df_filtrado['MONTO_PI'].sum()
@@ -568,50 +543,28 @@ with col_der:
     sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
     num_proy = df_filtrado['FOL_PROG'].nunique()
 
-    st.markdown('<div class="section-header">📈 Resumen Ejecutivo</div>', unsafe_allow_html=True)
-    
-    # Tarjeta 1: Inversión CONAFOR
+    st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
     st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">💰 Inversión CONAFOR</div>
-        <div class="kpi-value">${monto_cnf:,.0f}</div>
-        <div class="kpi-subtext">Monto asignado directo</div>
+    <div class="metric-container">
+        <div class="metric-label">CONAFOR vs PARTE INTERESADA</div>
+        <div class="metric-value">${monto_cnf:,.0f}</div>
+        <div style="font-size: 0.8rem; color: #666; font-weight:bold;">+ ${monto_pi:,.0f} (Part.)</div>
+    </div>
+    <div class="metric-container" style="border-left: 5px solid {COLOR_SECUNDARIO}; background:white;">
+        <div class="metric-label">TOTAL EJERCIDO</div>
+        <div class="metric-value-total">${monto_tot:,.0f}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Tarjeta 2: Parte Interesada
+    st.markdown('<div class="section-header" style="margin-top: 25px;">🌲 AVANCE FÍSICO</div>', unsafe_allow_html=True)
     st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-label">🤝 Contrapartida</div>
-        <div class="kpi-value">${monto_pi:,.0f}</div>
-        <div class="kpi-subtext">Aportación beneficiarios</div>
+    <div class="metric-container">
+        <div class="metric-label">Superficie Total</div>
+        <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
     </div>
-    """, unsafe_allow_html=True)
-
-    # Tarjeta 3: TOTAL (DESTACADA)
-    st.markdown(f"""
-    <div class="kpi-card-highlight">
-        <div class="kpi-label kpi-label-light">Total Ejercido en Cuenca</div>
-        <div class="kpi-value kpi-value-light">${monto_tot:,.0f}</div>
-        <div style="font-size: 0.8rem; opacity: 0.9;">Impacto económico total</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Tarjeta 4: Superficie
-    st.markdown(f"""
-    <div class="kpi-card" style="border-left-color: {COLOR_SECUNDARIO};">
-        <div class="kpi-label">🌲 Cobertura</div>
-        <div class="kpi-value">{sup_tot:,.1f} <span style="font-size: 1rem;">ha</span></div>
-        <div class="kpi-subtext">Superficie intervenida</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Tarjeta 5: Proyectos
-    st.markdown(f"""
-    <div class="kpi-card" style="border-left-color: {COLOR_SECUNDARIO};">
-        <div class="kpi-label">📋 Proyectos</div>
-        <div class="kpi-value">{num_proy}</div>
-        <div class="kpi-subtext">Apoyos únicos registrados</div>
+    <div class="metric-container">
+        <div class="metric-label">PROYECTOS APOYADOS</div>
+        <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -666,24 +619,43 @@ with col_head_btn:
 # 📑 PESTAÑAS (UI PANTALLA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
+tab_evolucion, tab_categorias, tab_distribucion, tab_tabla = st.tabs([
+    "📈 Evolución Histórica", 
+    "📊 Programas y Municipios", 
+    "🥧 Distribución y Conceptos", 
+    "📑 Base de Datos"
+])
 
-# 1. EXPANDER: DETALLES Y GRÁFICOS
-with st.expander("Ampliar para obtener detalles y gráficos", expanded=False):
+# --- Pestaña 1: Evolución ---
+with tab_evolucion:
     if not df_filtrado.empty:
-        st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
-        
-        c_g1, c_g2, c_g3 = st.columns(3)
-        with c_g1: 
-            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-        with c_g2: 
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-        with c_g3: 
-            st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
-        
-        st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
+        with st.container(border=True):
+            st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
 
-# 2. EXPANDER: TABLA DE DATOS
-with st.expander("Ampliar para visualizar y descargar la tabla", expanded=False):
+# --- Pestaña 2: Programas y Municipios ---
+with tab_categorias:
+    if not df_filtrado.empty:
+        c1, c2 = st.columns(2)
+        with c1: 
+            with st.container(border=True):
+                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+        with c2: 
+            with st.container(border=True):
+                st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
+
+# --- Pestaña 3: Distribución y Conceptos ---
+with tab_distribucion:
+    if not df_filtrado.empty:
+        c3, c4 = st.columns(2)
+        with c3: 
+            with st.container(border=True):
+                st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        with c4: 
+            with st.container(border=True):
+                st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
+
+# --- Pestaña 4: Base de Datos ---
+with tab_tabla:
     c_tit, c_btns = st.columns([5, 2])
     with c_tit: st.subheader("📑 Detalle de Apoyos")
     
