@@ -619,22 +619,42 @@ with col_head_btn:
 # 📑 PESTAÑAS (UI PANTALLA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
-tab_graficos, tab_tabla = st.tabs(["📊 GRÁFICOS  " , "📑 BASE DE DATOS  "])
+tab_evolucion, tab_categorias, tab_distribucion, tab_tabla = st.tabs([
+    "📈 Evolución Histórica", 
+    "📊 Programas y Municipios", 
+    "🥧 Distribución y Conceptos", 
+    "📑 Base de Datos"
+])
 
-with tab_graficos:
+# --- Pestaña 1: Evolución ---
+with tab_evolucion:
     if not df_filtrado.empty:
-        with st.container(border=True): st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
+        with st.container(border=True):
+            st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
+
+# --- Pestaña 2: Programas y Municipios ---
+with tab_categorias:
+    if not df_filtrado.empty:
         c1, c2 = st.columns(2)
         with c1: 
-            with st.container(border=True): st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+            with st.container(border=True):
+                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
         with c2: 
-            with st.container(border=True): st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
+            with st.container(border=True):
+                st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
+
+# --- Pestaña 3: Distribución y Conceptos ---
+with tab_distribucion:
+    if not df_filtrado.empty:
         c3, c4 = st.columns(2)
         with c3: 
-            with st.container(border=True): st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+            with st.container(border=True):
+                st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
         with c4: 
-            with st.container(border=True): st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
+            with st.container(border=True):
+                st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
+# --- Pestaña 4: Base de Datos ---
 with tab_tabla:
     c_tit, c_btns = st.columns([5, 2])
     with c_tit: st.subheader("📑 Detalle de Apoyos")
