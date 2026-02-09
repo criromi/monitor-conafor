@@ -619,7 +619,7 @@ with col_head_btn:
 # 📑 PESTAÑAS (UI PANTALLA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
-tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
+tab_graficos, tab_tabla = st.tabs(["📊 GRÁFICOS", "📑 BASE DE DATOS"])
 
 with tab_graficos:
     if not df_filtrado.empty:
