@@ -224,7 +224,7 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (DISEÑO PROFESIONAL)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (DISEÑO PROFESIONAL CORREGIDO)
 # ==============================================================================
 def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 1. Cálculos de TODOS los KPIs
@@ -248,9 +248,10 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     map_srcdoc = map_html.replace('"', '&quot;')
 
     # 4. CSS DISEÑO PROFESIONAL (HOJA CARTA)
+    # NOTA: Usamos {{ y }} para escapar los corchetes de CSS dentro del f-string de Python
     css = f"""
     <style>
-        @page {{ size: letter portrait; margin: 1cm; }} /* Configuración Hoja Carta */
+        @page {{ size: letter portrait; margin: 1cm; }}
         body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; color: #333; background: #fff; }}
         .page-break {{ page-break-before: always; }}
         .no-print {{ display: none; }}
@@ -270,9 +271,9 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
             background: #fff;
             padding: 25px 20px;
             border-radius: 12px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.08); /* Sombra suave profesional */
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
             text-align: center;
-            border-bottom: 5px solid {COLOR_PRIMARIO}; /* Acento inferior */
+            border-bottom: 5px solid {COLOR_PRIMARIO};
             transition: all 0.3s ease;
         }}
         
@@ -286,10 +287,10 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         .kpi-val {{ font-size: 26px; font-weight: 800; color: {COLOR_PRIMARIO}; display: block; margin-bottom: 5px; }}
         .kpi-lbl {{ font-size: 13px; text-transform: uppercase; color: #777; font-weight: 700; letter-spacing: 0.5px; }}
         
-        /* MAPA GRANDE Y CENTRADO (Ocupa el espacio restante) */
+        /* MAPA GRANDE */
         .map-wrapper {{
             width: 100%;
-            height: 65vh; /* Ocupa el 65% de la altura de la página, llenando el espacio */
+            height: 65vh;
             min-height: 600px;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
@@ -298,7 +299,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         }}
         .map-wrapper iframe {{ width: 100%; height: 100%; border: none; }}
 
-        /* GRÁFICOS DISTRIBUIDOS (Hoja 2) */
+        /* GRÁFICOS */
         .section-title {{ font-size: 24px; font-weight: bold; color: {COLOR_PRIMARIO}; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }}
         
         .chart-container-full {{
@@ -307,13 +308,13 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            margin-bottom: 30px; /* Espacio entre gráficos */
+            margin-bottom: 30px;
         }}
         
         .chart-grid-2up {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px; /* Espacio amplio entre columnas */
+            gap: 30px;
             margin-bottom: 30px;
         }}
         
@@ -322,7 +323,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            height: 380px; /* Altura fija para uniformidad */
+            height: 380px;
             display: flex; align-items: center; justify-content: center;
         }}
 
@@ -333,16 +334,16 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
         tr:nth-child(even) {{ background-color: #f8f9fa; }}
         
         /* Botón flotante solo para pantalla */
-        @media screen {
-            .floating-print-btn {
+        @media screen {{
+            .floating-print-btn {{
                 position: fixed; top: 20px; right: 20px; z-index: 9999;
                 background: {COLOR_PRIMARIO}; color: white; border: none;
                 padding: 12px 25px; font-weight: bold; border-radius: 30px;
                 cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 transition: background 0.2s;
-            }
-            .floating-print-btn:hover { background: {COLOR_SECUNDARIO}; }
-        }
+            }}
+            .floating-print-btn:hover {{ background: {COLOR_SECUNDARIO}; }}
+        }}
     </style>
     """
     
