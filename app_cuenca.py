@@ -54,14 +54,12 @@ st.markdown(f"""
         box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
     }}
     
-    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
-    .stTabs [data-baseweb="tab"] {{
-        height: 45px; white-space: pre-wrap; background-color: white;
-        border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 8px; padding-bottom: 8px;
-        border: 1px solid #ddd; border-bottom: none; font-size: 0.9rem;
-    }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
+    /* Estilo para los Expanders (Desplegables) */
+    .streamlit-expanderHeader {{
+        font-weight: bold;
+        color: {COLOR_PRIMARIO};
+        background-color: #f8f9fa;
+        border-radius: 8px;
     }}
 
     .section-header {{
@@ -619,43 +617,24 @@ with col_head_btn:
 # 📑 PESTAÑAS (UI PANTALLA)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
-tab_evolucion, tab_categorias, tab_distribucion, tab_tabla = st.tabs([
-    "📈 Evolución Histórica", 
-    "📊 Programas y Municipios", 
-    "🥧 Distribución y Conceptos", 
-    "📑 Base de Datos"
-])
 
-# --- Pestaña 1: Evolución ---
-with tab_evolucion:
+# 1. EXPANDER: DETALLES Y GRÁFICOS
+with st.expander("Ampliar para obtener detalles y gráficos", expanded=False):
     if not df_filtrado.empty:
-        with st.container(border=True):
-            st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
+        
+        c_g1, c_g2, c_g3 = st.columns(3)
+        with c_g1: 
+            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+        with c_g2: 
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        with c_g3: 
+            st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
+        
+        st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
-# --- Pestaña 2: Programas y Municipios ---
-with tab_categorias:
-    if not df_filtrado.empty:
-        c1, c2 = st.columns(2)
-        with c1: 
-            with st.container(border=True):
-                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-        with c2: 
-            with st.container(border=True):
-                st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
-
-# --- Pestaña 3: Distribución y Conceptos ---
-with tab_distribucion:
-    if not df_filtrado.empty:
-        c3, c4 = st.columns(2)
-        with c3: 
-            with st.container(border=True):
-                st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-        with c4: 
-            with st.container(border=True):
-                st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
-
-# --- Pestaña 4: Base de Datos ---
-with tab_tabla:
+# 2. EXPANDER: TABLA DE DATOS
+with st.expander("Ampliar para visualizar y descargar la tabla", expanded=False):
     c_tit, c_btns = st.columns([5, 2])
     with c_tit: st.subheader("📑 Detalle de Apoyos")
     
