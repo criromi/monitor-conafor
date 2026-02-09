@@ -42,46 +42,73 @@ CATALOGO_CAPAS = {
 }
 
 # ==============================================================================
-# 🎨 ESTILOS CSS (INTERFAZ WEB)
+# 🎨 ESTILOS CSS (INTERFAZ WEB RENOVADA)
 # ==============================================================================
 st.markdown(f"""
     <style>
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
+    /* Contenedor de columnas */
     div[data-testid="column"] {{
-        background-color: white; border-radius: 12px; padding: 15px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
+        background-color: transparent; border: none; box-shadow: none; padding: 0px;
     }}
     
-    /* Estilo para los Expanders (Desplegables) */
+    /* TARJETAS KPI MODERNAS */
+    .kpi-card {{
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-left: 5px solid {COLOR_ACENTO};
+        margin-bottom: 15px;
+        transition: transform 0.2s;
+    }}
+    .kpi-card:hover {{ transform: translateY(-2px); }}
+    
+    .kpi-card-highlight {{
+        background: linear-gradient(135deg, {COLOR_PRIMARIO} 0%, #1e4d43 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(19, 50, 43, 0.3);
+        margin-bottom: 15px;
+        text-align: center;
+    }}
+
+    .kpi-label {{
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }}
+    .kpi-label-light {{ color: rgba(255,255,255,0.8); }}
+
+    .kpi-value {{
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: {COLOR_PRIMARIO};
+        margin: 0;
+    }}
+    .kpi-value-light {{ color: white; font-size: 1.8rem; }}
+    
+    .kpi-subtext {{
+        font-size: 0.85rem;
+        color: #888;
+        font-weight: 500;
+    }}
+
+    /* Estilo para los Expanders */
     .streamlit-expanderHeader {{
         font-weight: bold;
         color: {COLOR_PRIMARIO};
-        background-color: #f8f9fa;
-        border-radius: 8px;
+        background-color: white !important;
+        border-radius: 10px !important;
+        border: 1px solid #eee !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     }}
-
-    .section-header {{
-        color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
-        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
-    }}
-    .chart-title {{
-        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
-        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
-    }}
-    
-    .metric-container {{
-        background-color: #F8F9FA; border-radius: 8px; padding: 10px;
-        margin-bottom: 8px; text-align: center; border: 1px solid #eee;
-    }}
-    .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
-    .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
-    
-    div[data-testid="stVerticalBlock"] > div:first-child {{
-        padding-top: 0px;
-    }}
-    div.stButton > button {{ width: 100%; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -532,7 +559,7 @@ with col_centro:
     m.get_root().add_child(macro)
     st_folium(m, width="100%", height=550, returned_objects=[])
 
-# --- 3. TARJETAS KPI (PANTALLA) ---
+# --- 3. TARJETAS KPI (DISEÑO PROFESIONAL) ---
 with col_der:
     monto_cnf = df_filtrado['MONTO_CNF'].sum()
     monto_pi = df_filtrado['MONTO_PI'].sum()
@@ -541,28 +568,50 @@ with col_der:
     sup_tot = df_filtrado[col_sup].sum() if col_sup else 0
     num_proy = df_filtrado['FOL_PROG'].nunique()
 
-    st.markdown('<div class="section-header">💰 INVERSIÓN (MXN)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📈 Resumen Ejecutivo</div>', unsafe_allow_html=True)
+    
+    # Tarjeta 1: Inversión CONAFOR
     st.markdown(f"""
-    <div class="metric-container">
-        <div class="metric-label">CONAFOR vs PARTE INTERESADA</div>
-        <div class="metric-value">${monto_cnf:,.0f}</div>
-        <div style="font-size: 0.8rem; color: #666; font-weight:bold;">+ ${monto_pi:,.0f} (Part.)</div>
-    </div>
-    <div class="metric-container" style="border-left: 5px solid {COLOR_SECUNDARIO}; background:white;">
-        <div class="metric-label">TOTAL EJERCIDO</div>
-        <div class="metric-value-total">${monto_tot:,.0f}</div>
+    <div class="kpi-card">
+        <div class="kpi-label">💰 Inversión CONAFOR</div>
+        <div class="kpi-value">${monto_cnf:,.0f}</div>
+        <div class="kpi-subtext">Monto asignado directo</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header" style="margin-top: 25px;">🌲 AVANCE FÍSICO</div>', unsafe_allow_html=True)
+    # Tarjeta 2: Parte Interesada
     st.markdown(f"""
-    <div class="metric-container">
-        <div class="metric-label">Superficie Total</div>
-        <div class="metric-value" style="color:{COLOR_PRIMARIO}; font-size:1.4rem;">{sup_tot:,.1f} ha</div>
+    <div class="kpi-card">
+        <div class="kpi-label">🤝 Contrapartida</div>
+        <div class="kpi-value">${monto_pi:,.0f}</div>
+        <div class="kpi-subtext">Aportación beneficiarios</div>
     </div>
-    <div class="metric-container">
-        <div class="metric-label">PROYECTOS APOYADOS</div>
-        <span style="font-size:1.6rem; font-weight:bold; color:{COLOR_PRIMARIO};">{num_proy}</span>
+    """, unsafe_allow_html=True)
+
+    # Tarjeta 3: TOTAL (DESTACADA)
+    st.markdown(f"""
+    <div class="kpi-card-highlight">
+        <div class="kpi-label kpi-label-light">Total Ejercido en Cuenca</div>
+        <div class="kpi-value kpi-value-light">${monto_tot:,.0f}</div>
+        <div style="font-size: 0.8rem; opacity: 0.9;">Impacto económico total</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Tarjeta 4: Superficie
+    st.markdown(f"""
+    <div class="kpi-card" style="border-left-color: {COLOR_SECUNDARIO};">
+        <div class="kpi-label">🌲 Cobertura</div>
+        <div class="kpi-value">{sup_tot:,.1f} <span style="font-size: 1rem;">ha</span></div>
+        <div class="kpi-subtext">Superficie intervenida</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Tarjeta 5: Proyectos
+    st.markdown(f"""
+    <div class="kpi-card" style="border-left-color: {COLOR_SECUNDARIO};">
+        <div class="kpi-label">📋 Proyectos</div>
+        <div class="kpi-value">{num_proy}</div>
+        <div class="kpi-subtext">Apoyos únicos registrados</div>
     </div>
     """, unsafe_allow_html=True)
 
