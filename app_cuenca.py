@@ -40,7 +40,7 @@ st.markdown(f"""
     #MainMenu, footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem; padding-bottom: 2rem; }}
     
-    /* Contenedores de columnas */
+    /* Contenedores de columnas Generales */
     div[data-testid="column"]:nth-of-type(1) > div {{
         background-color: white; border-radius: 12px; padding: 20px;
         border: 1px solid #e0e0e0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); height: 100%;
@@ -69,7 +69,7 @@ st.markdown(f"""
     }}
     .chart-title {{
         font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
-        text-align: center; margin-top: 5px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 2px;
+        text-align: center; margin-top: 2px; margin-bottom: 2px; border-bottom: 1px solid #eee; padding-bottom: 2px;
     }}
     
     /* Métricas Derecha */
@@ -356,74 +356,79 @@ with col_der:
 st.markdown("<br>", unsafe_allow_html=True)
 tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
 
-# --- TAB 1: GRÁFICOS COMPACTOS ---
+# --- TAB 1: GRÁFICOS (TARJETAS + COMPACTOS) ---
 with tab_graficos:
     if not df_filtrado.empty:
-        # === GRÁFICO DE LÍNEAS (Total por Ejercicio) ===
-        if 'ANIO' in df_filtrado.columns:
-            st.markdown('<div class="chart-title">Evolución de Inversión por Ejercicio</div>', unsafe_allow_html=True)
-            d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
-            d_anio = d_anio[d_anio['ANIO'] > 0]
-            
-            fig = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True,
-                          color_discrete_sequence=[COLOR_SECUNDARIO],
-                          labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
-            
-            # Altura reducida a 250px
-            fig.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
-            fig.update_layout(height=250, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-        # =================================================
+        # 1. GRÁFICO HISTÓRICO (Línea)
+        with st.container(border=True): # <--- RECUADRO
+            if 'ANIO' in df_filtrado.columns:
+                st.markdown('<div class="chart-title">Evolución de Inversión por Ejercicio</div>', unsafe_allow_html=True)
+                d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
+                d_anio = d_anio[d_anio['ANIO'] > 0]
+                
+                fig = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True,
+                              color_discrete_sequence=[COLOR_SECUNDARIO],
+                              labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
+                
+                fig.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
+                # Altura reducida a 250px
+                fig.update_layout(height=250, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
+        # 2. GRID DE GRÁFICOS (Barras/Pastel)
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
-            d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
-            colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d['TIPO_CAPA']]
-            
-            fig = go.Figure(data=[go.Bar(
-                x=d['TIPO_CAPA'], y=d['MONTO_TOT'],
-                text=d['MONTO_TOT'], texttemplate='$%{text:.2s}', textposition='auto',
-                marker_color=colors
-            )])
-            # Altura reducida a 220px
-            fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=220, 
-                              margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            with st.container(border=True): # <--- RECUADRO
+                st.markdown('<div class="chart-title">Inversión por Programa</div>', unsafe_allow_html=True)
+                d = df_filtrado.groupby('TIPO_CAPA')['MONTO_TOT'].sum().reset_index().sort_values('MONTO_TOT', ascending=False)
+                colors = [CATALOGO_CAPAS.get(c, {}).get('color_chart', 'grey') for c in d['TIPO_CAPA']]
+                
+                fig = go.Figure(data=[go.Bar(
+                    x=d['TIPO_CAPA'], y=d['MONTO_TOT'],
+                    text=d['MONTO_TOT'], texttemplate='$%{text:.2s}', textposition='auto',
+                    marker_color=colors
+                )])
+                # Altura reducida a 200px
+                fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=200, 
+                                  margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
 
         with col_g2:
-            if 'MUNICIPIO' in df_filtrado.columns:
-                st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
-                d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-                f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
-                           color_discrete_sequence=[COLOR_PRIMARIO],
-                           labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
-                # Altura reducida a 220px
-                f.update_layout(height=220, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
-                st.plotly_chart(f, use_container_width=True)
+            with st.container(border=True): # <--- RECUADRO
+                if 'MUNICIPIO' in df_filtrado.columns:
+                    st.markdown('<div class="chart-title">Top 10 Municipios</div>', unsafe_allow_html=True)
+                    d = df_filtrado.groupby('MUNICIPIO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
+                    f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
+                               color_discrete_sequence=[COLOR_PRIMARIO],
+                               labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
+                    # Altura reducida a 200px
+                    f.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+                    st.plotly_chart(f, use_container_width=True)
         
         col_g3, col_g4 = st.columns(2)
         with col_g3:
-             if 'TIPO_PROP' in df_filtrado.columns:
-                st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
-                d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
-                f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
-                           color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
-                           labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
-                # Altura reducida a 220px
-                f.update_layout(height=220, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
-                st.plotly_chart(f, use_container_width=True)
+             with st.container(border=True): # <--- RECUADRO
+                 if 'TIPO_PROP' in df_filtrado.columns:
+                    st.markdown('<div class="chart-title">Tenencia de la Tierra</div>', unsafe_allow_html=True)
+                    d = df_filtrado.groupby('TIPO_PROP')['MONTO_TOT'].sum().reset_index()
+                    f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
+                               color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
+                               labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
+                    # Altura reducida a 200px
+                    f.update_layout(height=200, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+                    st.plotly_chart(f, use_container_width=True)
         with col_g4:
-             if 'CONCEPTO' in df_filtrado.columns:
-                st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
-                d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
-                d['C'] = d['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
-                f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
-                           color_discrete_sequence=[COLOR_SECUNDARIO],
-                           labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
-                # Altura reducida a 220px
-                f.update_layout(height=220, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
-                st.plotly_chart(f, use_container_width=True)
+             with st.container(border=True): # <--- RECUADRO
+                 if 'CONCEPTO' in df_filtrado.columns:
+                    st.markdown('<div class="chart-title">Top 10 Conceptos</div>', unsafe_allow_html=True)
+                    d = df_filtrado.groupby('CONCEPTO')['MONTO_TOT'].sum().reset_index().nlargest(10, 'MONTO_TOT')
+                    d['C'] = d['CONCEPTO'].apply(lambda x: x[:30]+'...' if len(x)>30 else x)
+                    f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
+                               color_discrete_sequence=[COLOR_SECUNDARIO],
+                               labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
+                    # Altura reducida a 200px
+                    f.update_layout(height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
+                    st.plotly_chart(f, use_container_width=True)
 
 # --- TAB 2: TABLA ---
 with tab_tabla:
