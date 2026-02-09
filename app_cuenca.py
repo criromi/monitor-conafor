@@ -272,11 +272,28 @@ def cargar_datos():
         gdf = gpd.read_parquet(ruta_master) if os.path.exists(ruta_master) else None
 
     if gdf is not None:
-        for c in ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT', 'GERENCIA']:
+        # 1. Normalización de Textos
+        cols_text = ['FOL_PROG', 'MUNICIPIO', 'TIPO_CAPA', 'TIPO_PROP', 'CONCEPTO', 'ESTADO', 'SOLICITANT', 'GERENCIA']
+        for c in cols_text:
             if c in gdf.columns: gdf[c] = gdf[c].astype(str)
+        
+        # 2. FIX: Normalización INTELIGENTE de AÑO/EJERCICIO
+        # Busca si existe alguna columna parecida a ANIO, AÑO, EJERCICIO
+        col_anio = next((c for c in gdf.columns if c.upper() in ['ANIO', 'AÑO', 'EJERCICIO', 'YEAR']), None)
+        if col_anio:
+            # Si existe, renómbrala a 'ANIO' para estandarizar
+            gdf.rename(columns={col_anio: 'ANIO'}, inplace=True)
+        else:
+            # Si no existe, créala con un valor por defecto
+            gdf['ANIO'] = 0
+
+        # 3. Normalización de Numéricos
         for col in ['MONTO_CNF', 'MONTO_PI', 'MONTO_TOT', 'SUPERFICIE', 'ANIO']:
-            if col not in gdf.columns: gdf[col] = 0.0
-            else: gdf[col] = pd.to_numeric(gdf[col], errors='coerce').fillna(0)
+            if col not in gdf.columns: 
+                gdf[col] = 0.0
+            else: 
+                # Convierte a numérico forzando errores a NaN y luego a 0
+                gdf[col] = pd.to_numeric(gdf[col], errors='coerce').fillna(0)
 
     cuenca = gpd.read_parquet(ruta_cuenca) if os.path.exists(ruta_cuenca) else None
     return gdf, cuenca
@@ -293,7 +310,8 @@ col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 with col_izq:
     # --- BUSCADOR INTELIGENTE ---
     st.markdown('<div class="section-header">🔍 BUSCADOR</div>', unsafe_allow_html=True)
-    busqueda = st.text_input("Buscar Beneficiario o Folio:", placeholder="Escribe aquí...", help="Filtra el mapa y las gráficas por texto")
+    # Actualizamos el texto de ayuda
+    busqueda = st.text_input("Buscar:", placeholder="Beneficiario, Folio o Municipio...", help="Escribe para filtrar")
     
     st.markdown('<div style="margin-top:15px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">🎛️ CAPAS DISPONIBLES</div>', unsafe_allow_html=True)
@@ -309,8 +327,10 @@ df_filtrado = df_total[df_total['TIPO_CAPA'].isin(capas_activas)].copy()
 
 if busqueda:
     busqueda = busqueda.upper()
+    # FIX: AHORA BUSCA EN BENEFICIARIO (SOLICITANT), FOLIO O MUNICIPIO
     mask = (df_filtrado['SOLICITANT'].str.upper().str.contains(busqueda, na=False)) | \
-           (df_filtrado['FOL_PROG'].str.upper().str.contains(busqueda, na=False))
+           (df_filtrado['FOL_PROG'].str.upper().str.contains(busqueda, na=False)) | \
+           (df_filtrado['MUNICIPIO'].str.upper().str.contains(busqueda, na=False))
     df_filtrado = df_filtrado[mask]
 
 df_filtrado['FOL_PROG'] = df_filtrado['FOL_PROG'].astype(str).str.strip()
@@ -328,7 +348,7 @@ with col_izq:
     st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-header">📥 DESCARGAR DATOS</div>', unsafe_allow_html=True)
     if not df_filtrado.empty:
-        # Descarga Rápida en Sidebar (Mantenemos por si acaso, pero la tabla tiene la suya mejorada)
+        # Descarga Rápida en Sidebar
         nombres = {'FOL_PROG':'FOLIO', 'MONTO_TOT':'INVERSIÓN', 'TIPO_CAPA':'CATEGORÍA', col_sup:'SUPERFICIE'}
         df_ex = df_filtrado.drop(columns='geometry', errors='ignore').rename(columns=nombres)
         buff = BytesIO()
@@ -504,7 +524,7 @@ CONFIG_COLUMNAS = {
     "MONTO_CNF": "MONTO CONAFOR",
     "MONTO_PI": "MONTO CONTRAPARTE",
     "MONTO_TOT": "MONTO TOTAL",
-    "ANIO": "EJERCICIO",
+    "ANIO": "EJERCICIO", # AQUI USAMOS EL NOMBRE NORMALIZADO 'ANIO'
     "GERENCIA": "GERENCIA"
 }
 
