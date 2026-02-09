@@ -614,63 +614,75 @@ with col_head_btn:
         st.download_button("🖨️", html_reporte, f"Reporte_CONAFOR_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True, help="Descargar Reporte Ejecutivo para Imprimir")
 
 # ==============================================================================
-# 📑 SECCIÓN DE DETALLES (EXPANDERS CON RECUADROS) - SUSTITUIR DESDE AQUÍ
+# 📑 SECCIÓN DE DETALLES (ESTILO TARJETAS POR GRÁFICO)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Estilo para las tarjetas de los gráficos
+# CSS para recrear los recuadros sombreados de tu imagen
 st.markdown("""
     <style>
-    .plot-card {
+    .chart-card {
         background-color: white;
         border: 1px solid #e6e9ef;
         border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-        margin-bottom: 20px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 1. EXPANDER: DETALLES Y GRÁFICOS
+# 1. EXPANDER DE GRÁFICOS
 with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=False):
     if not df_filtrado.empty:
-        # Gráfico de Línea
-        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+        # Gráfico 1: Evolución Histórica (Ancho completo)
+        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
         st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Fila de 3 gráficos
+        # Fila de 3 Gráficos: Programa, Régimen y Municipios
         c_g1, c_g2, c_g3 = st.columns(3)
+        
         with c_g1: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
+            
         with c_g2: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
+            
         with c_g3: 
-            st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
             st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
         
-        # Gráfico de Conceptos
-        st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+        # Gráfico final: Conceptos (Ancho completo)
+        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
         st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
         st.markdown('</div>', unsafe_allow_html=True)
 
-# 2. EXPANDER: TABLA DE DATOS
+# 2. EXPANDER DE TABLA
 with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=False):
-    st.markdown('<div class="plot-card">', unsafe_allow_html=True)
+    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
     c_tit, c_btns = st.columns([5, 2])
-    with c_tit: st.subheader("Base de Datos de Apoyos")
+    with c_tit: 
+        st.subheader("Base de Datos de Apoyos Registrados")
     
-    # Preparación de datos para la tabla
-    CONFIG_COLUMNAS = {"FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"}
+    # Preparación de datos para la tabla (Ajustada a tus columnas)
+    CONFIG_COLUMNAS = {
+        "FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", 
+        "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "TIPO DE PROPIEDAD", 
+        "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUPERFICIE (Ha)", 
+        "MONTO_CNF": "MONTO CONAFOR", "MONTO_PI": "MONTO CONTRAPARTE", 
+        "MONTO_TOT": "MONTO TOTAL", "ANIO": "EJERCICIO"
+    }
+    
     cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
-    df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_RENOMBRE if 'CONFIG_RENOMBRE' in locals() else CONFIG_COLUMNAS)
+    df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
 
+    # Funciones de descarga (Excel y SHP)
     def generar_excel(df):
         out = BytesIO()
         with pd.ExcelWriter(out, engine='xlsxwriter') as w: df.to_excel(w, index=False)
@@ -687,8 +699,17 @@ with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=F
 
     with c_btns:
         b1, b2 = st.columns(2)
-        with b1: st.download_button("📥 Excel", generar_excel(df_tabla), "Datos.xlsx", "application/vnd.ms-excel")
-        with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Mapa.zip", "application/zip")
+        with b1: st.download_button("📥 Excel", generar_excel(df_tabla), "Datos_Monitor.xlsx", "application/vnd.ms-excel")
+        with b2: st.download_button("🌍 Shape", generar_shp(df_filtrado), "Capa_Proyectos.zip", "application/zip")
 
-    st.dataframe(df_tabla, use_container_width=True, hide_index=True, column_config={"TOTAL": st.column_config.NumberColumn(format="$ %.2f"), "SUP (HA)": st.column_config.NumberColumn(format="%.2f ha"), "EJERCICIO": st.column_config.NumberColumn(format="%d")})
+    st.dataframe(
+        df_tabla, 
+        use_container_width=True, 
+        hide_index=True, 
+        column_config={
+            "MONTO TOTAL": st.column_config.NumberColumn(format="$ %.2f"), 
+            "SUPERFICIE (Ha)": st.column_config.NumberColumn(format="%.2f ha"), 
+            "EJERCICIO": st.column_config.NumberColumn(format="%d")
+        }
+    )
     st.markdown('</div>', unsafe_allow_html=True)
