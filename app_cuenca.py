@@ -71,7 +71,7 @@ st.markdown(f"""
     .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
     .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     
-    /* Botón Discreto de Impresión (Hacks de CSS para ajustarlo arriba) */
+    /* Botón Discreto de Impresión */
     div[data-testid="stVerticalBlock"] > div:first-child {{
         padding-top: 0px;
     }}
@@ -113,7 +113,7 @@ if st.session_state.rol is None:
     st.stop() 
 
 # ==============================================================================
-# 🛠️ MODO ADMINISTRADOR (Oculto en Sidebar)
+# 🛠️ MODO ADMINISTRADOR
 # ==============================================================================
 modo_edicion_activo = False
 if st.session_state.rol == "admin":
@@ -128,7 +128,6 @@ if st.session_state.rol == "admin":
 
 if modo_edicion_activo:
     st.title("🛠️ Gestión de Datos")
-    # ... (Lógica de Admin resumida para el ejemplo, asumo backend_admin existe)
     st.info("Panel de carga de archivos activo.")
     st.stop()
 
@@ -180,22 +179,29 @@ if df_total is None:
     st.stop()
 
 # ==============================================================================
-# 🏗️ GENERADOR DE REPORTE COMPLETO (LA MAGIA)
+# 🏗️ GENERADOR DE REPORTE COMPLETO (CORREGIDO)
 # ==============================================================================
-def generar_reporte_completo_html(df_filtrado, map_html, figuras_html, logo_b64):
+def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     """
-    Genera un único HTML con:
-    Página 1: Portada, Mapa, KPIs
-    Página 2: Gráficos
-    Página 3: Tabla
+    Recibe df_raw (con columnas originales como MONTO_TOT) para cálculos,
+    y luego renombra internamente para mostrar la tabla bonita.
     """
-    # Cálculos KPIs
-    m_tot = df_filtrado['MONTO_TOT'].sum()
-    s_tot = df_filtrado['SUPERFICIE'].sum() if 'SUPERFICIE' in df_filtrado.columns else 0
-    n_proy = len(df_filtrado)
+    # 1. Cálculos de KPIs usando nombres originales
+    m_tot = df_raw['MONTO_TOT'].sum() if 'MONTO_TOT' in df_raw.columns else 0
+    s_tot = df_raw['SUPERFICIE'].sum() if 'SUPERFICIE' in df_raw.columns else 0
+    n_proy = len(df_raw)
     fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    # Estilos CSS para Impresión
+    # 2. Preparar Tabla Visual (Renombrar aquí)
+    CONFIG_RENOMBRE = {
+        "FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", 
+        "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", 
+        "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"
+    }
+    cols_ok = [c for c in CONFIG_RENOMBRE.keys() if c in df_raw.columns]
+    df_visual = df_raw[cols_ok].rename(columns=CONFIG_RENOMBRE)
+
+    # 3. Estilos CSS
     css = f"""
     <style>
         body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
@@ -232,7 +238,7 @@ def generar_reporte_completo_html(df_filtrado, map_html, figuras_html, logo_b64)
     
     logo_img = f'<img src="data:image/png;base64,{logo_b64}" height="60">' if logo_b64 else ''
     
-    # HTML Estructura
+    # 4. Construcción del HTML
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -284,7 +290,7 @@ def generar_reporte_completo_html(df_filtrado, map_html, figuras_html, logo_b64)
             {logo_img}
         </div>
         
-        {df_filtrado.to_html(index=False, border=0)}
+        {df_visual.to_html(index=False, border=0)}
         
     </body>
     </html>
@@ -303,7 +309,7 @@ def get_logo():
 
 logo_b64, ext_enc = get_logo()
 
-# --- LAYOUT SUPERIOR (TÍTULO + BOTÓN) ---
+# --- LAYOUT SUPERIOR ---
 col_head_tit, col_head_btn = st.columns([9, 1], vertical_alignment="top")
 
 with col_head_tit:
@@ -323,7 +329,7 @@ with col_head_tit:
         """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 🧱 LAYOUT 3 COLUMNAS (FILTROS - MAPA - KPIS)
+# 🧱 LAYOUT 3 COLUMNAS
 # ==============================================================================
 col_izq, col_centro, col_der = st.columns([1.1, 2.9, 1.4], gap="medium")
 
@@ -440,9 +446,9 @@ with col_der:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📊 PREPARACIÓN DE GRÁFICOS (PARA PANTALLA Y REPORTE)
+# 📊 PREPARACIÓN DE GRÁFICOS (PARA REPORTE)
 # ==============================================================================
-figs_reporte = {} # Guardaremos el HTML de los gráficos aquí
+figs_reporte = {} 
 
 if not df_filtrado.empty:
     # 1. LÍNEA
@@ -480,20 +486,15 @@ if not df_filtrado.empty:
     figs_reporte['concepto'] = fig_con.to_html(full_html=False, include_plotlyjs='cdn')
 
 # ==============================================================================
-# 🖨️ BOTÓN "DISIMULADO" EN HEADER (Lógica)
+# 🖨️ BOTÓN "DISIMULADO" EN HEADER
 # ==============================================================================
 with col_head_btn:
-    st.write("") # Espaciador
+    st.write("") 
     if not df_filtrado.empty:
-        # Generamos el mapa HTML estático para el reporte
         map_html = m.get_root().render()
         
-        # Preparamos la tabla para el reporte
-        CONFIG_COLUMNAS = {"FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"}
-        cols_ok = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
-        df_rep = df_filtrado[cols_ok].rename(columns=CONFIG_COLUMNAS)
-        
-        html_reporte = generar_reporte_completo_html(df_rep, map_html, figs_reporte, logo_b64)
+        # FIX: Pasamos df_filtrado DIRECTAMENTE (con las columnas originales)
+        html_reporte = generar_reporte_completo_html(df_filtrado, map_html, figs_reporte, logo_b64)
         
         st.download_button(
             label="🖨️",
@@ -531,7 +532,6 @@ with tab_tabla:
     c_tit, c_btns = st.columns([5, 2])
     with c_tit: st.subheader("📑 Detalle de Apoyos")
     
-    # Preparación de datos para la tabla visual
     CONFIG_COLUMNAS = {"FOL_PROG": "FOLIO", "ESTADO": "ESTADO", "MUNICIPIO": "MUNICIPIO", "SOLICITANT": "BENEFICIARIO", "TIPO_PROP": "REGIMEN", "CONCEPTO": "CONCEPTO", "SUPERFICIE": "SUP (HA)", "MONTO_TOT": "TOTAL", "ANIO": "EJERCICIO"}
     cols_presentes = [c for c in CONFIG_COLUMNAS.keys() if c in df_filtrado.columns]
     df_tabla = df_filtrado[cols_presentes].rename(columns=CONFIG_COLUMNAS)
