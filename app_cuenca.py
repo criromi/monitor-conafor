@@ -54,9 +54,9 @@ st.markdown(f"""
     /* Pestañas (Tabs) Estilizadas */
     .stTabs [data-baseweb="tab-list"] {{ gap: 10px; }}
     .stTabs [data-baseweb="tab"] {{
-        height: 50px; white-space: pre-wrap; background-color: white;
-        border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px;
-        border: 1px solid #ddd; border-bottom: none;
+        height: 45px; white-space: pre-wrap; background-color: white;
+        border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 8px; padding-bottom: 8px;
+        border: 1px solid #ddd; border-bottom: none; font-size: 0.9rem;
     }}
     .stTabs [aria-selected="true"] {{
         background-color: {COLOR_PRIMARIO} !important; color: white !important; font-weight: bold;
@@ -65,20 +65,20 @@ st.markdown(f"""
     /* Títulos */
     .section-header {{
         color: {COLOR_PRIMARIO}; font-weight: 800; text-transform: uppercase;
-        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1.1rem;
+        border-bottom: 3px solid {COLOR_ACENTO}; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem;
     }}
     .chart-title {{
-        font-size: 0.9rem; font-weight: bold; color: {COLOR_PRIMARIO};
-        text-align: center; margin-top: 10px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px;
+        font-size: 0.85rem; font-weight: bold; color: {COLOR_PRIMARIO};
+        text-align: center; margin-top: 5px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 2px;
     }}
     
     /* Métricas Derecha */
     .metric-container {{
-        background-color: #F8F9FA; border-radius: 8px; padding: 12px;
+        background-color: #F8F9FA; border-radius: 8px; padding: 10px;
         margin-bottom: 8px; text-align: center; border: 1px solid #eee;
     }}
-    .metric-value {{ font-size: 1.3rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 5px 0; }}
-    .metric-value-total {{ font-size: 1.6rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 5px 0; }}
+    .metric-value {{ font-size: 1.2rem; font-weight: 800; color: {COLOR_PRIMARIO}; margin: 2px 0; }}
+    .metric-value-total {{ font-size: 1.4rem; font-weight: 900; color: {COLOR_SECUNDARIO}; margin: 2px 0; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -356,7 +356,7 @@ with col_der:
 st.markdown("<br>", unsafe_allow_html=True)
 tab_graficos, tab_tabla = st.tabs(["📊 DASHBOARD GRÁFICO", "📑 BASE DE DATOS DETALLADA"])
 
-# --- TAB 1: GRÁFICOS ---
+# --- TAB 1: GRÁFICOS COMPACTOS ---
 with tab_graficos:
     if not df_filtrado.empty:
         # === GRÁFICO DE LÍNEAS (Total por Ejercicio) ===
@@ -365,13 +365,13 @@ with tab_graficos:
             d_anio = df_filtrado.groupby('ANIO')['MONTO_TOT'].sum().reset_index().sort_values('ANIO')
             d_anio = d_anio[d_anio['ANIO'] > 0]
             
-            # Línea con marcadores y color institucional
             fig = px.line(d_anio, x='ANIO', y='MONTO_TOT', markers=True,
                           color_discrete_sequence=[COLOR_SECUNDARIO],
                           labels={'MONTO_TOT': 'MONTO TOTAL', 'ANIO': 'EJERCICIO'})
             
+            # Altura reducida a 250px
             fig.update_traces(line=dict(width=3), marker=dict(size=8, color=COLOR_PRIMARIO))
-            fig.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+            fig.update_layout(height=250, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         # =================================================
 
@@ -386,7 +386,8 @@ with tab_graficos:
                 text=d['MONTO_TOT'], texttemplate='$%{text:.2s}', textposition='auto',
                 marker_color=colors
             )])
-            fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=300, 
+            # Altura reducida a 220px
+            fig.update_layout(xaxis_title="PROGRAMA", yaxis_title="MONTO TOTAL", height=220, 
                               margin=dict(t=10,b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig, use_container_width=True)
 
@@ -397,7 +398,8 @@ with tab_graficos:
                 f = px.bar(d, x='MUNICIPIO', y='MONTO_TOT', text_auto='.2s', 
                            color_discrete_sequence=[COLOR_PRIMARIO],
                            labels={'MONTO_TOT': 'MONTO TOTAL', 'MUNICIPIO': 'MUNICIPIO'})
-                f.update_layout(height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+                # Altura reducida a 220px
+                f.update_layout(height=220, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
                 st.plotly_chart(f, use_container_width=True)
         
         col_g3, col_g4 = st.columns(2)
@@ -408,7 +410,8 @@ with tab_graficos:
                 f = px.pie(d, values='MONTO_TOT', names='TIPO_PROP', hole=0.5, 
                            color_discrete_sequence=[COLOR_SECUNDARIO, COLOR_ACENTO, COLOR_PRIMARIO],
                            labels={'MONTO_TOT': 'MONTO TOTAL', 'TIPO_PROP': 'RÉGIMEN'})
-                f.update_layout(height=250, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
+                # Altura reducida a 220px
+                f.update_layout(height=220, showlegend=True, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10))
                 st.plotly_chart(f, use_container_width=True)
         with col_g4:
              if 'CONCEPTO' in df_filtrado.columns:
@@ -418,7 +421,8 @@ with tab_graficos:
                 f = px.bar(d, y='C', x='MONTO_TOT', orientation='h', text_auto='.2s', 
                            color_discrete_sequence=[COLOR_SECUNDARIO],
                            labels={'MONTO_TOT': 'MONTO TOTAL', 'C': 'CONCEPTO'})
-                f.update_layout(height=250, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
+                # Altura reducida a 220px
+                f.update_layout(height=220, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=10,b=10), yaxis_title="")
                 st.plotly_chart(f, use_container_width=True)
 
 # --- TAB 2: TABLA ---
