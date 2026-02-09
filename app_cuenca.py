@@ -81,22 +81,14 @@ st.markdown(f"""
     }}
     div.stButton > button {{ width: 100%; }}
 
-    /* ==========================================================================
-       CSS MÁGICO PARA TARJETAS DE GRÁFICOS (FIX)
-       ========================================================================== */
-    /* Busca cualquier bloque vertical de Streamlit que contenga nuestra 'marca' (.chart-card) */
-    [data-testid="stVerticalBlock"] > div:has(div.chart-card) {{
+    /* ESTILO PARA LOS RECUADROS DE LAS GRÁFICAS (border=True) */
+    /* Esto le da la sombra suave y el fondo blanco a los st.container(border=True) */
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
         background-color: white;
-        border: 1px solid #e6e9ef;
         border-radius: 10px;
-        padding: 15px;
+        border: 1px solid #e6e9ef;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }}
-    
-    /* La marca invisible */
-    .chart-card {{
-        display: none; 
+        padding: 15px;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -261,7 +253,7 @@ def generar_reporte_completo_html(df_raw, map_html, figuras_html, logo_b64):
     # 3. Escapar mapa
     map_srcdoc = map_html.replace('"', '&quot;')
 
-    # 4. CSS DISEÑO PROFESIONAL (DOBLES LLAVES PARA CSS, UNA LLAVE PARA VARIABLES)
+    # 4. CSS DISEÑO PROFESIONAL
     css = f"""
     <style>
         @page {{ size: letter portrait; margin: 1cm; }}
@@ -629,7 +621,7 @@ with col_head_btn:
         st.download_button("🖨️", html_reporte, f"Reporte_CONAFOR_{datetime.now().strftime('%Y%m%d')}.html", "text/html", use_container_width=True, help="Descargar Reporte Ejecutivo para Imprimir")
 
 # ==============================================================================
-# 📑 SECCIÓN DE DETALLES (SOLUCIÓN DEFINITIVA)
+# 📑 SECCIÓN DE DETALLES (SOLUCIÓN DEFINITIVA: UN SOLO RECUADRO)
 # ==============================================================================
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -638,37 +630,31 @@ with st.expander("📊 Ampliar para obtener detalles y gráficos", expanded=Fals
     if not df_filtrado.empty:
         
         # --- Gráfico de Línea (Ancho Completo) ---
-        with st.container():
-            st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+        with st.container(border=True):
             st.plotly_chart(fig_linea, use_container_width=True, config={'displayModeBar': False})
         
         # --- Fila de 3 gráficos ---
         c_g1, c_g2, c_g3 = st.columns(3)
         
         with c_g1: 
-            with st.container():
-                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+            with st.container(border=True):
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
             
         with c_g2: 
-            with st.container():
-                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+            with st.container(border=True):
                 st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
             
         with c_g3: 
-            with st.container():
-                st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+            with st.container(border=True):
                 st.plotly_chart(fig_mun, use_container_width=True, config={'displayModeBar': False})
         
         # --- Gráfico de Conceptos (Ancho Completo) ---
-        with st.container():
-            st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+        with st.container(border=True):
             st.plotly_chart(fig_con, use_container_width=True, config={'displayModeBar': False})
 
 # 2. EXPANDER: TABLA DE DATOS
 with st.expander("📑 Ampliar para visualizar y descargar la tabla", expanded=False):
-    with st.container():
-        st.markdown('<div class="chart-card"></div>', unsafe_allow_html=True)
+    with st.container(border=True):
         c_tit, c_btns = st.columns([5, 2])
         with c_tit: st.subheader("Base de Datos de Apoyos")
         
